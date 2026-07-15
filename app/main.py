@@ -15,10 +15,11 @@ from fastapi.responses import HTMLResponse
 # 菜单模块负责模拟数据读取，营养模块负责身体信息校验和营养公式计算。
 from .menu_catalog import MenuCatalog
 from .nutrition import NutritionInputError, NutritionRequest, calculate_daily_nutrition
+from .recommendation import RecommendationError, recommend_takeaway_plans
 
 
 # 创建 Web 应用实例；标题和版本会显示在 /docs 自动接口文档中。
-app = FastAPI(title="Nutrition Analysis Service", version="1.0.0")
+app = FastAPI(title="Nutrition Analysis Service", version="1.1.0")
 
 # 默认读取项目内置的模拟菜单。部署或测试时可通过环境变量替换数据文件，
 # 从而不必修改源代码即可使用另一份相同结构的 JSON。
@@ -59,6 +60,25 @@ def nutrition(payload: dict[str, Any]) -> dict[str, Any]:
     except NutritionInputError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return calculate_daily_nutrition(request)
+
+
+# 推荐接口复用身体信息计算结果，并从全部模拟菜品中寻找两餐组合。
+@app.post("/recommendations")
+def recommendations(payload: dict[str, Any]) -> dict[str, Any]:
+    """返回营养分析结果以及午餐、晚餐外卖推荐组合。"""
+
+    try:
+        request = NutritionRequest.from_dict(payload)
+        breakfast_ratio = float(payload.get("breakfast_ratio", 0.25))
+        nutrition_analysis = calculate_daily_nutrition(request)
+        recommendation = recommend_takeaway_plans(
+            menu_catalog.load(),
+            nutrition_analysis,
+            breakfast_ratio=breakfast_ratio,
+        )
+    except (NutritionInputError, RecommendationError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"nutrition": nutrition_analysis, "recommendation": recommendation}
 
 
 # 模拟菜单查询接口支持按平台、分类、最高价格和返回数量筛选。

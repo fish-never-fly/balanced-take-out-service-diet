@@ -124,6 +124,34 @@
       .muted { color: var(--muted); }
       .menu-item h3 { margin: 0 0 7px; font-size: 1rem; }
       .menu-item p { margin: 4px 0 0; font-size: 0.9rem; }
+
+      /* 推荐方案纵向排列，每张卡片展示两餐、总价格、营养合计和偏离信息。 */
+      .recommendations { display: grid; gap: 14px; margin-top: 16px; }
+
+      .plan {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: white;
+      }
+
+      .plan-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .plan-meals {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 10px;
+      }
+
+      .meal { padding: 12px; border-radius: 14px; background: var(--bg); }
+      .meal strong { display: block; margin-top: 4px; }
+      .plan-details { margin-top: 12px; color: var(--muted); line-height: 1.7; }
     </style>
   </head>
   <body>
@@ -168,6 +196,13 @@
         <div id="metrics" class="metrics"></div>
       </section>
 
+      <!-- 推荐结果区：精确匹配时展示全部组合，否则展示加权偏离最小的三组。 -->
+      <section class="panel">
+        <h2>午餐与晚餐推荐</h2>
+        <p id="recommendation-summary">填写身体信息并计算后生成两餐外卖方案。</p>
+        <div id="recommendations" class="recommendations"></div>
+      </section>
+
       <section class="panel">
         <!-- 模拟菜单预览区：只展示前八条，完整数据可通过 /menu-items 获取。 -->
         <h2>模拟外卖数据</h2>
@@ -181,6 +216,8 @@
       const calculateButton = document.getElementById("calculate-button");
       const status = document.getElementById("status");
       const metrics = document.getElementById("metrics");
+      const recommendationSummary = document.getElementById("recommendation-summary");
+      const recommendations = document.getElementById("recommendations");
       const menuGrid = document.getElementById("menu-grid");
 
       // 把后端返回的 {min, max} 区间转换为适合页面显示的文本。
@@ -218,15 +255,74 @@
         ).join("");
       }
 
-      // 读取表单、发送营养计算请求，并负责请求期间的按钮和状态变化。
+      // 把后端已经排序的方案完整渲染出来；exact 模式可能包含三种以上组合。
+      function renderRecommendations(result) {
+        const nutrientLabels = {
+          energy_kcal: "热量",
+          protein_g: "蛋白质",
+          fat_g: "脂肪",
+          carbohydrate_g: "碳水",
+          fiber_g: "纤维",
+          sodium_mg: "钠",
+          added_sugar_g: "添加糖",
+        };
+
+        recommendationSummary.textContent =
+          `${result.message} 共评估 ${result.evaluated_combinations} 个组合。`;
+
+        recommendations.innerHTML = result.plans.map((plan, index) => {
+          // 兜底方案按单项加权偏离从高到低展示前三个主要不足或超标项。
+          const mainDeviations = Object.entries(plan.deviations)
+            .filter(([, entry]) => entry.weighted_deviation > 0)
+            .sort((left, right) => right[1].weighted_deviation - left[1].weighted_deviation)
+            .slice(0, 3)
+            .map(([key, entry]) =>
+              `${nutrientLabels[key]}偏离 ${(entry.deviation_ratio * 100).toFixed(1)}%`
+            )
+            .join("；");
+
+          const totals = plan.nutrition_totals;
+          return `
+            <article class="plan">
+              <div class="plan-header">
+                <strong>方案 ${index + 1}</strong>
+                <strong>总价 ¥${plan.total_price_yuan.toFixed(2)}</strong>
+              </div>
+              <div class="plan-meals">
+                <div class="meal">
+                  <span class="muted">午餐 · ${plan.lunch.store_name}</span>
+                  <strong>${plan.lunch.dish_name} · ¥${plan.lunch.price_yuan}</strong>
+                </div>
+                <div class="meal">
+                  <span class="muted">晚餐 · ${plan.dinner.store_name}</span>
+                  <strong>${plan.dinner.dish_name} · ¥${plan.dinner.price_yuan}</strong>
+                </div>
+              </div>
+              <div class="plan-details">
+                两餐合计：${totals.energy_kcal} kcal，蛋白质 ${totals.protein_g} g，
+                脂肪 ${totals.fat_g} g，碳水 ${totals.carbohydrate_g} g，
+                纤维 ${totals.fiber_g} g，钠 ${totals.sodium_mg} mg，
+                添加糖 ${totals.added_sugar_g} g。<br />
+                ${plan.is_exact_match
+                  ? "完全满足当前营养条件。"
+                  : `加权偏离系数：${plan.deviation_score.toFixed(4)}。主要偏离：${mainDeviations}`}
+              </div>
+            </article>
+          `;
+        }).join("");
+      }
+
+      // 读取表单、发送营养与推荐请求，并负责请求期间的按钮和状态变化。
       async function calculateNutrition() {
         // 禁用按钮可避免用户快速重复提交；同时清空上一次结果。
         calculateButton.disabled = true;
         status.textContent = "正在计算...";
         metrics.innerHTML = "";
+        recommendations.innerHTML = "";
+        recommendationSummary.textContent = "正在评估午餐和晚餐组合...";
         try {
-          // 所有公式都在后端执行，确保网页和其他 API 客户端得到一致结果。
-          const response = await fetch("/nutrition", {
+          // /recommendations 同时返回营养分析和外卖组合，避免前端自行复制评分算法。
+          const response = await fetch("/recommendations", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             // 将 HTML 输入值转换为明确的数字、字符串和布尔值后再序列化为 JSON。
@@ -245,11 +341,13 @@
           // 无论成功还是失败，FastAPI 都返回 JSON；非成功状态转为异常统一处理。
           const payload = await response.json();
           if (!response.ok) throw new Error(payload.detail || "计算失败");
-          renderMetrics(payload);
+          renderMetrics(payload.nutrition);
+          renderRecommendations(payload.recommendation);
           status.textContent = "计算完成。结果为通用参考，不替代医生或营养师建议。";
         } catch (error) {
           // 网络失败或后端校验失败时，在状态区域展示错误消息。
           status.textContent = error.message;
+          recommendationSummary.textContent = "推荐方案生成失败。";
         } finally {
           // 请求结束后恢复按钮，无论请求成功还是失败都允许用户再次计算。
           calculateButton.disabled = false;

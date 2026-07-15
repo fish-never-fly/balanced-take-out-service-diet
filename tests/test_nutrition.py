@@ -5,6 +5,7 @@ from pathlib import Path
 
 from app.menu_catalog import MenuCatalog
 from app.nutrition import NutritionInputError, NutritionRequest, calculate_daily_nutrition
+from app.recommendation import recommend_takeaway_plans
 
 
 class NutritionTest(unittest.TestCase):
@@ -84,6 +85,90 @@ class MenuCatalogTest(unittest.TestCase):
         self.assertTrue(items)
         self.assertTrue(all(item["platform"] == "meituan" for item in items))
         self.assertTrue(all(item["price_yuan"] <= 30 for item in items))
+
+
+class RecommendationTest(unittest.TestCase):
+    """验证精确组合价格排序和无解时的前三名兜底逻辑。"""
+
+    def setUp(self) -> None:
+        file_path = Path(__file__).resolve().parent.parent / "examples" / "nutrition_menu.json"
+        self.items = MenuCatalog(file_path).load()
+        self.analysis = calculate_daily_nutrition(
+            NutritionRequest(
+                height_cm=170,
+                weight_kg=65,
+                age=30,
+                sex="female",
+                activity_level="moderate",
+            )
+        )
+
+    def test_returns_three_closest_real_fixture_combinations(self) -> None:
+        # 当前 44 道模拟菜品没有两餐组合同时满足全部每日目标，因此应返回前三名。
+        result = recommend_takeaway_plans(self.items, self.analysis)
+
+        self.assertEqual(result["mode"], "closest")
+        self.assertEqual(result["evaluated_combinations"], 946)
+        self.assertEqual(len(result["plans"]), 3)
+        scores = [plan["deviation_score"] for plan in result["plans"]]
+        self.assertEqual(scores, sorted(scores))
+
+    def test_returns_all_exact_matches_sorted_by_price(self) -> None:
+        # 三道测试菜任意两道都满足宽泛目标，结果应返回全部三个组合并按价格排序。
+        items = [
+            self._item("a", 10),
+            self._item("b", 20),
+            self._item("c", 5),
+        ]
+        analysis = {
+            "input": {
+                "health_flags": {
+                    "high_blood_glucose": False,
+                    "high_blood_lipids": False,
+                    "high_blood_pressure": False,
+                }
+            },
+            "daily_targets": {
+                "energy_kcal": {"min": 100, "max": 200},
+                "protein_g": {"min": 10, "max": 20},
+                "fat_g": {"min": 5, "max": 20},
+                "carbohydrate_g": {"min": 10, "max": 40},
+                "dietary_fiber_g": 2,
+                "sodium_max_mg": 500,
+                "added_sugar_max_g": 10,
+            },
+        }
+
+        result = recommend_takeaway_plans(items, analysis)
+
+        self.assertEqual(result["mode"], "exact")
+        self.assertEqual(result["exact_match_count"], 3)
+        self.assertEqual(
+            [plan["total_price_yuan"] for plan in result["plans"]],
+            [15, 25, 30],
+        )
+
+    @staticmethod
+    def _item(item_id: str, price: float) -> dict[str, object]:
+        """创建一条营养值固定的最小测试菜品。"""
+
+        return {
+            "id": item_id,
+            "platform": "meituan",
+            "store_name": "测试商家",
+            "dish_name": f"测试菜品 {item_id}",
+            "category": "测试",
+            "price_yuan": price,
+            "nutrition": {
+                "energy_kcal": 60,
+                "protein_g": 6,
+                "fat_g": 3,
+                "carbohydrate_g": 8,
+                "fiber_g": 1.5,
+                "sodium_mg": 100,
+                "added_sugar_g": 1,
+            },
+        }
 
 
 if __name__ == "__main__":
