@@ -1,6 +1,6 @@
 {
   "dataset": "synthetic_takeaway_menu_v1",
-  "description": "Synthetic per-serving nutrition data for recommendation testing only.",
+  "description": "用于推荐算法测试的模拟外卖数据，所有营养值均按每份菜品记录，不代表真实商家检测结果。",
   "items": [
     {
       "id": "sim-001",
@@ -241,6 +241,206 @@
       "serving_g": 620,
       "price_yuan": 20.8,
       "nutrition": {"energy_kcal": 438, "protein_g": 20.0, "fat_g": 10.0, "carbohydrate_g": 68.0, "fiber_g": 9.2, "sodium_mg": 920, "added_sugar_g": 1.0}
+    },
+    {
+      "id": "sim-025",
+      "platform": "meituan",
+      "store_name": "晨间谷物铺",
+      "dish_name": "燕麦酸奶坚果杯",
+      "category": "早餐",
+      "serving_g": 320,
+      "price_yuan": 22.8,
+      "nutrition": {"energy_kcal": 385, "protein_g": 16.0, "fat_g": 13.0, "carbohydrate_g": 50.0, "fiber_g": 7.8, "sodium_mg": 180, "added_sugar_g": 8.0}
+    },
+    {
+      "id": "sim-026",
+      "platform": "eleme",
+      "store_name": "晨间谷物铺",
+      "dish_name": "鸡蛋鸡胸全麦卷",
+      "category": "早餐",
+      "serving_g": 300,
+      "price_yuan": 24.8,
+      "nutrition": {"energy_kcal": 430, "protein_g": 32.0, "fat_g": 14.0, "carbohydrate_g": 42.0, "fiber_g": 6.5, "sodium_mg": 720, "added_sugar_g": 3.0}
+    },
+    {
+      "id": "sim-027",
+      "platform": "jd",
+      "store_name": "晨间谷物铺",
+      "dish_name": "紫薯鸡蛋牛奶套餐",
+      "category": "早餐",
+      "serving_g": 420,
+      "price_yuan": 19.8,
+      "nutrition": {"energy_kcal": 472, "protein_g": 21.0, "fat_g": 12.0, "carbohydrate_g": 69.0, "fiber_g": 7.0, "sodium_mg": 360, "added_sugar_g": 6.0}
+    },
+    {
+      "id": "sim-028",
+      "platform": "meituan",
+      "store_name": "低碳研究所",
+      "dish_name": "花椰菜米烤鸡碗",
+      "category": "低碳餐",
+      "serving_g": 420,
+      "price_yuan": 35.8,
+      "nutrition": {"energy_kcal": 438, "protein_g": 43.0, "fat_g": 20.0, "carbohydrate_g": 24.0, "fiber_g": 10.5, "sodium_mg": 760, "added_sugar_g": 2.0}
+    },
+    {
+      "id": "sim-029",
+      "platform": "eleme",
+      "store_name": "低碳研究所",
+      "dish_name": "牛肉西兰花低碳盒",
+      "category": "低碳餐",
+      "serving_g": 400,
+      "price_yuan": 38.8,
+      "nutrition": {"energy_kcal": 486, "protein_g": 39.0, "fat_g": 25.0, "carbohydrate_g": 27.0, "fiber_g": 9.0, "sodium_mg": 850, "added_sugar_g": 3.0}
+    },
+    {
+      "id": "sim-030",
+      "platform": "jd",
+      "store_name": "低碳研究所",
+      "dish_name": "虾仁豆腐蔬菜碗",
+      "category": "低碳餐",
+      "serving_g": 430,
+      "price_yuan": 33.8,
+      "nutrition": {"energy_kcal": 405, "protein_g": 35.0, "fat_g": 18.0, "carbohydrate_g": 25.0, "fiber_g": 8.5, "sodium_mg": 780, "added_sugar_g": 1.5}
+    },
+    {
+      "id": "sim-031",
+      "platform": "meituan",
+      "store_name": "北方饺子馆",
+      "dish_name": "白菜猪肉水饺",
+      "category": "饺子",
+      "serving_g": 420,
+      "price_yuan": 25.8,
+      "nutrition": {"energy_kcal": 690, "protein_g": 28.0, "fat_g": 24.0, "carbohydrate_g": 91.0, "fiber_g": 5.0, "sodium_mg": 1420, "added_sugar_g": 2.0}
+    },
+    {
+      "id": "sim-032",
+      "platform": "eleme",
+      "store_name": "北方饺子馆",
+      "dish_name": "韭菜鸡蛋蒸饺",
+      "category": "饺子",
+      "serving_g": 390,
+      "price_yuan": 22.8,
+      "nutrition": {"energy_kcal": 590, "protein_g": 24.0, "fat_g": 19.0, "carbohydrate_g": 80.0, "fiber_g": 5.8, "sodium_mg": 1160, "added_sugar_g": 1.0}
+    },
+    {
+      "id": "sim-033",
+      "platform": "jd",
+      "store_name": "北方饺子馆",
+      "dish_name": "香菇青菜素水饺",
+      "category": "饺子",
+      "serving_g": 400,
+      "price_yuan": 20.8,
+      "nutrition": {"energy_kcal": 535, "protein_g": 17.0, "fat_g": 14.0, "carbohydrate_g": 86.0, "fiber_g": 8.0, "sodium_mg": 1080, "added_sugar_g": 1.0}
+    },
+    {
+      "id": "sim-034",
+      "platform": "meituan",
+      "store_name": "亚洲风味食堂",
+      "dish_name": "照烧鸡肉饭",
+      "category": "亚洲料理",
+      "serving_g": 500,
+      "price_yuan": 29.8,
+      "nutrition": {"energy_kcal": 748, "protein_g": 37.0, "fat_g": 22.0, "carbohydrate_g": 98.0, "fiber_g": 4.5, "sodium_mg": 1680, "added_sugar_g": 14.0}
+    },
+    {
+      "id": "sim-035",
+      "platform": "eleme",
+      "store_name": "亚洲风味食堂",
+      "dish_name": "韩式牛肉拌饭",
+      "category": "亚洲料理",
+      "serving_g": 520,
+      "price_yuan": 34.8,
+      "nutrition": {"energy_kcal": 720, "protein_g": 33.0, "fat_g": 21.0, "carbohydrate_g": 96.0, "fiber_g": 8.0, "sodium_mg": 1720, "added_sugar_g": 9.0}
+    },
+    {
+      "id": "sim-036",
+      "platform": "jd",
+      "store_name": "亚洲风味食堂",
+      "dish_name": "三文鱼寿司组合",
+      "category": "亚洲料理",
+      "serving_g": 380,
+      "price_yuan": 39.8,
+      "nutrition": {"energy_kcal": 565, "protein_g": 28.0, "fat_g": 15.0, "carbohydrate_g": 79.0, "fiber_g": 3.5, "sodium_mg": 1250, "added_sugar_g": 7.0}
+    },
+    {
+      "id": "sim-037",
+      "platform": "meituan",
+      "store_name": "农家炖汤",
+      "dish_name": "莲藕排骨汤配米饭",
+      "category": "炖汤饭",
+      "serving_g": 680,
+      "price_yuan": 31.8,
+      "nutrition": {"energy_kcal": 642, "protein_g": 32.0, "fat_g": 22.0, "carbohydrate_g": 78.0, "fiber_g": 6.0, "sodium_mg": 1180, "added_sugar_g": 2.0}
+    },
+    {
+      "id": "sim-038",
+      "platform": "eleme",
+      "store_name": "农家炖汤",
+      "dish_name": "山药鸡汤配杂粮饭",
+      "category": "炖汤饭",
+      "serving_g": 670,
+      "price_yuan": 30.8,
+      "nutrition": {"energy_kcal": 575, "protein_g": 36.0, "fat_g": 15.0, "carbohydrate_g": 72.0, "fiber_g": 7.5, "sodium_mg": 980, "added_sugar_g": 1.5}
+    },
+    {
+      "id": "sim-039",
+      "platform": "jd",
+      "store_name": "农家炖汤",
+      "dish_name": "萝卜牛腩汤配糙米饭",
+      "category": "炖汤饭",
+      "serving_g": 690,
+      "price_yuan": 36.8,
+      "nutrition": {"energy_kcal": 628, "protein_g": 38.0, "fat_g": 20.0, "carbohydrate_g": 74.0, "fiber_g": 7.0, "sodium_mg": 1260, "added_sugar_g": 2.0}
+    },
+    {
+      "id": "sim-040",
+      "platform": "meituan",
+      "store_name": "活力便当",
+      "dish_name": "彩椒虾仁炒饭",
+      "category": "炒饭",
+      "serving_g": 480,
+      "price_yuan": 27.8,
+      "nutrition": {"energy_kcal": 715, "protein_g": 29.0, "fat_g": 23.0, "carbohydrate_g": 98.0, "fiber_g": 5.5, "sodium_mg": 1380, "added_sugar_g": 3.0}
+    },
+    {
+      "id": "sim-041",
+      "platform": "eleme",
+      "store_name": "活力便当",
+      "dish_name": "咖喱牛肉土豆饭",
+      "category": "咖喱饭",
+      "serving_g": 530,
+      "price_yuan": 32.8,
+      "nutrition": {"energy_kcal": 805, "protein_g": 34.0, "fat_g": 30.0, "carbohydrate_g": 101.0, "fiber_g": 6.5, "sodium_mg": 1540, "added_sugar_g": 7.0}
+    },
+    {
+      "id": "sim-042",
+      "platform": "jd",
+      "store_name": "活力便当",
+      "dish_name": "肉末蒸蛋杂粮饭",
+      "category": "便当",
+      "serving_g": 470,
+      "price_yuan": 24.8,
+      "nutrition": {"energy_kcal": 610, "protein_g": 31.0, "fat_g": 20.0, "carbohydrate_g": 76.0, "fiber_g": 6.0, "sodium_mg": 1050, "added_sugar_g": 2.0}
+    },
+    {
+      "id": "sim-043",
+      "platform": "meituan",
+      "store_name": "麻辣自选铺",
+      "dish_name": "麻辣烫蔬菜豆制品套餐",
+      "category": "麻辣烫",
+      "serving_g": 650,
+      "price_yuan": 28.8,
+      "nutrition": {"energy_kcal": 630, "protein_g": 30.0, "fat_g": 28.0, "carbohydrate_g": 65.0, "fiber_g": 12.0, "sodium_mg": 2480, "added_sugar_g": 3.0}
+    },
+    {
+      "id": "sim-044",
+      "platform": "eleme",
+      "store_name": "城市汉堡屋",
+      "dish_name": "双层牛肉汉堡薯条套餐",
+      "category": "快餐",
+      "serving_g": 520,
+      "price_yuan": 39.9,
+      "nutrition": {"energy_kcal": 1120, "protein_g": 45.0, "fat_g": 58.0, "carbohydrate_g": 105.0, "fiber_g": 6.0, "sodium_mg": 2260, "added_sugar_g": 16.0}
     }
   ]
 }

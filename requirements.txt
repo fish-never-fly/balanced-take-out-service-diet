@@ -1,2 +1,4 @@
+# 提供 HTTP 路由、请求参数校验和自动接口文档。
 fastapi==0.116.1
+# 运行 FastAPI 应用的 ASGI 服务器；standard 包含常用性能与开发依赖。
 uvicorn[standard]==0.35.0

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>每日营养需求分析</title>
     <style>
+      /* 全局颜色变量：统一控制背景、卡片、文字、强调色和边框颜色。 */
       :root {
         --bg: #f4f7f1;
         --card: rgba(255, 255, 255, 0.9);
@@ -16,8 +17,10 @@
         --warning: #8a5417;
       }
 
+      /* 让所有元素的宽高计算包含内边距和边框，减少布局尺寸偏差。 */
       * { box-sizing: border-box; }
 
+      /* 页面基础样式：设置中文字体、文字颜色和柔和的渐变背景。 */
       body {
         margin: 0;
         min-height: 100vh;
@@ -29,6 +32,7 @@
           var(--bg);
       }
 
+      /* 主内容容器限制最大宽度，并让各功能区按垂直方向排列。 */
       .shell {
         width: min(1080px, calc(100% - 32px));
         margin: 32px auto 56px;
@@ -36,6 +40,7 @@
         gap: 20px;
       }
 
+      /* 首页标题区与功能面板共用半透明卡片、圆角和阴影。 */
       .hero, .panel {
         border: 1px solid var(--line);
         border-radius: 24px;
@@ -46,12 +51,14 @@
 
       .hero, .panel { padding: 26px; }
 
+      /* 标题和说明文字的排版规则。 */
       h1, h2 { margin: 0; }
       h1 { font-size: clamp(2rem, 5vw, 3.4rem); letter-spacing: -0.04em; }
       h2 { margin-bottom: 8px; }
 
       p { margin: 10px 0 0; color: var(--muted); line-height: 1.65; }
 
+      /* 自适应表单网格：屏幕变窄时输入框会自动换行。 */
       .grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -60,6 +67,7 @@
 
       label { display: grid; gap: 8px; font-size: 0.95rem; }
 
+      /* 输入框、下拉框和按钮采用统一尺寸与圆角。 */
       input, select, button {
         padding: 12px 14px;
         border: 1px solid var(--line);
@@ -69,6 +77,7 @@
 
       input, select { background: white; color: var(--ink); }
 
+      /* 三高选项使用可换行的胶囊式复选框布局。 */
       .choices { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 
       .choice {
@@ -82,6 +91,7 @@
         background: white;
       }
 
+      /* 主按钮使用绿色渐变；请求处理中通过 disabled 状态提示用户等待。 */
       button {
         margin-top: 18px;
         color: white;
@@ -92,8 +102,10 @@
 
       button:disabled { opacity: 0.6; cursor: wait; }
 
+      /* 状态区域用于显示计算进度、成功提示和错误信息。 */
       .status { min-height: 24px; margin-top: 14px; color: var(--warning); font-weight: 600; }
 
+      /* 营养指标和模拟菜单都使用响应式卡片网格。 */
       .metrics, .menu-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -116,13 +128,16 @@
   </head>
   <body>
     <main class="shell">
+      <!-- 顶部介绍区：说明页面用途，不收集或展示附近商家信息。 -->
       <section class="hero">
         <h1>每日营养需求分析</h1>
         <p>根据成年人的身高、体重、年龄、性别和健康情况，估算每日营养摄入参考范围。</p>
       </section>
 
+      <!-- 身体信息输入区：五个基础字段和三个可选健康标记组成完整请求。 -->
       <section class="panel">
         <div class="grid">
+          <!-- 数值范围与后端 NutritionRequest 的校验边界保持一致。 -->
           <label>身高（厘米）<input id="height" type="number" min="100" max="250" step="0.1" value="170" /></label>
           <label>体重（千克）<input id="weight" type="number" min="25" max="300" step="0.1" value="65" /></label>
           <label>年龄<input id="age" type="number" min="18" max="100" step="1" value="30" /></label>
@@ -130,20 +145,31 @@
             性别
             <select id="sex"><option value="female">女</option><option value="male">男</option></select>
           </label>
+          <label>
+            日常活动水平
+            <select id="activity-level">
+              <option value="sedentary">久坐</option>
+              <option value="moderate">适量运动</option>
+              <option value="vigorous">剧烈运动</option>
+            </select>
+          </label>
         </div>
 
+        <!-- 三高复选框默认不选中，勾选后会收紧对应营养物质的建议上限。 -->
         <div class="choices">
           <label class="choice"><input id="high-glucose" type="checkbox" />高血糖</label>
           <label class="choice"><input id="high-lipids" type="checkbox" />高血脂</label>
           <label class="choice"><input id="high-pressure" type="checkbox" />高血压</label>
         </div>
 
+        <!-- 点击按钮后由 JavaScript 调用 POST /nutrition，并在下方渲染结果。 -->
         <button id="calculate-button" type="button">计算每日营养需求</button>
         <div id="status" class="status"></div>
         <div id="metrics" class="metrics"></div>
       </section>
 
       <section class="panel">
+        <!-- 模拟菜单预览区：只展示前八条，完整数据可通过 /menu-items 获取。 -->
         <h2>模拟外卖数据</h2>
         <p>以下数据仅用于后续推荐算法测试，不代表真实商家的检测结果。</p>
         <div id="menu-grid" class="menu-grid"></div>
@@ -151,20 +177,31 @@
     </main>
 
     <script>
+      // 缓存页面元素引用，避免每次点击或渲染时重复查询 DOM。
       const calculateButton = document.getElementById("calculate-button");
       const status = document.getElementById("status");
       const metrics = document.getElementById("metrics");
       const menuGrid = document.getElementById("menu-grid");
 
+      // 把后端返回的 {min, max} 区间转换为适合页面显示的文本。
       function rangeText(value, unit) {
         return `${value.min}–${value.max} ${unit}`;
       }
 
+      // 将营养接口结果整理成“标签 + 数值”数组，再批量生成指标卡片。
       function renderMetrics(payload) {
+        // daily_targets 保存每日营养目标，body 保存 BMI 和基础代谢等身体指标。
         const targets = payload.daily_targets;
+        const activityLabels = {
+          sedentary: "久坐",
+          moderate: "适量运动",
+          vigorous: "剧烈运动",
+        };
         const values = [
           ["BMI", `${payload.body.bmi}（${payload.body.bmi_category}）`],
           ["基础代谢", `${payload.body.basal_metabolic_rate_kcal} kcal`],
+          ["活动水平", `${activityLabels[payload.input.activity_level]}（系数 ${payload.body.activity_factor}）`],
+          ["预计每日消耗", `${payload.body.estimated_daily_expenditure_kcal} kcal`],
           ["每日热量", rangeText(targets.energy_kcal, "kcal")],
           ["蛋白质", rangeText(targets.protein_g, "g")],
           ["脂肪", rangeText(targets.fat_g, "g")],
@@ -175,44 +212,58 @@
           ["钠上限", `${targets.sodium_max_mg} mg`],
           ["添加糖上限", `${targets.added_sugar_max_g} g`],
         ];
+        // values 中的内容来自本程序计算结果，不包含用户输入的自由文本。
         metrics.innerHTML = values.map(([label, value]) =>
           `<div class="metric"><span class="muted">${label}</span><strong>${value}</strong></div>`
         ).join("");
       }
 
+      // 读取表单、发送营养计算请求，并负责请求期间的按钮和状态变化。
       async function calculateNutrition() {
+        // 禁用按钮可避免用户快速重复提交；同时清空上一次结果。
         calculateButton.disabled = true;
         status.textContent = "正在计算...";
         metrics.innerHTML = "";
         try {
+          // 所有公式都在后端执行，确保网页和其他 API 客户端得到一致结果。
           const response = await fetch("/nutrition", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            // 将 HTML 输入值转换为明确的数字、字符串和布尔值后再序列化为 JSON。
             body: JSON.stringify({
               height_cm: Number(document.getElementById("height").value),
               weight_kg: Number(document.getElementById("weight").value),
               age: Number(document.getElementById("age").value),
               sex: document.getElementById("sex").value,
+              activity_level: document.getElementById("activity-level").value,
               high_blood_glucose: document.getElementById("high-glucose").checked,
               high_blood_lipids: document.getElementById("high-lipids").checked,
               high_blood_pressure: document.getElementById("high-pressure").checked,
             }),
           });
+
+          // 无论成功还是失败，FastAPI 都返回 JSON；非成功状态转为异常统一处理。
           const payload = await response.json();
           if (!response.ok) throw new Error(payload.detail || "计算失败");
           renderMetrics(payload);
           status.textContent = "计算完成。结果为通用参考，不替代医生或营养师建议。";
         } catch (error) {
+          // 网络失败或后端校验失败时，在状态区域展示错误消息。
           status.textContent = error.message;
         } finally {
+          // 请求结束后恢复按钮，无论请求成功还是失败都允许用户再次计算。
           calculateButton.disabled = false;
         }
       }
 
+      // 页面加载时读取少量模拟菜品，让用户确认测试数据已经正确接入。
       async function loadMenuPreview() {
         try {
+          // 页面只渲染前八条，完整 44 条模拟数据仍可通过 /menu-items 查询。
           const response = await fetch("/menu-items?limit=8");
           const items = await response.json();
+
+          // 每张卡片显示菜名、商家、价格、热量和蛋白质，其他营养值保留在接口数据中。
           menuGrid.innerHTML = items.map((item) => `
             <article class="menu-item">
               <h3>${item.dish_name}</h3>
@@ -221,10 +272,12 @@
             </article>
           `).join("");
         } catch (error) {
+          // 菜单预览失败不影响身体营养分析功能，只在当前区域显示提示。
           menuGrid.textContent = "模拟菜单加载失败。";
         }
       }
 
+      // 注册按钮点击事件，并在页面脚本加载完成后立即获取模拟菜单预览。
       calculateButton.addEventListener("click", calculateNutrition);
       loadMenuPreview();
     </script>
