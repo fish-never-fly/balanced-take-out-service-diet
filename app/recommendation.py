@@ -24,7 +24,23 @@ BASE_WEIGHTS: dict[str, float] = {
 }
 NUTRIENT_FIELDS = tuple(BASE_WEIGHTS)
 NUTRIENT_INDEX = {field: index for index, field in enumerate(NUTRIENT_FIELDS)}
-NUTRITION_SIMILARITY_THRESHOLD = 0.12
+NUTRITION_SIMILARITY_THRESHOLD = 0.10
+
+# 单菜近似判断只比较这五项；钠和添加糖仍参与最终营养评分，但不参与去重。
+SIMILARITY_NUTRIENT_FIELDS = (
+    "energy_kcal",
+    "protein_g",
+    "fat_g",
+    "carbohydrate_g",
+    "fiber_g",
+)
+
+# 午餐优先分强调高热量、较高复合碳水和较高蛋白质，三项权值总和为 1。
+LUNCH_PRIORITY_WEIGHTS = {
+    "energy": 0.40,
+    "complex_carbohydrate": 0.35,
+    "protein": 0.25,
+}
 
 
 # 每项依次为菜单字段、每日目标字段和约束类型。
@@ -64,6 +80,8 @@ class PairCandidate:
     meal_totals: tuple[float, ...]
     daily_totals: tuple[float, ...]
     score: float
+    lunch_priority_score: float
+    dinner_priority_score: float
 
     def score_sort_key(self) -> tuple[float, float, str, str]:
         """兜底结果按偏离、价格和 ID 稳定排序。"""
@@ -89,11 +107,17 @@ def recommend_takeaway_plans(
     items: list[dict[str, Any]],
     nutrition_analysis: dict[str, Any],
     breakfast: dict[str, Any] | None = None,
+    budget_yuan: float | None = None,
 ) -> dict[str, Any]:
     """将早餐计入全天摄入，返回全部精确组合或偏离最小的三组。"""
 
     if len(items) < 2:
         raise RecommendationError("at least two menu items are required")
+    if budget_yuan is not None and (
+        not isinstance(budget_yuan, (int, float)) or budget_yuan <= 0
+    ):
+        raise RecommendationError("budget_yuan must be a positive number")
+    budget_limit = float(budget_yuan) if budget_yuan is not None else None
 
     candidate_items, filter_report = filter_similar_dishes(items)
     prepared_items = [_prepare_dish(item) for item in candidate_items]
@@ -121,15 +145,31 @@ def recommend_takeaway_plans(
     exact_candidates: list[PairCandidate] = []
     top_three: list[PairCandidate] = []
     same_name_pairs_skipped = 0
+    over_budget_pairs_skipped = 0
     considered_combinations = 0
     fully_scored_combinations = 0
     pruned_combinations = 0
 
-    for lunch, dinner in combinations(prepared_items, 2):
-        if lunch.normalized_name == dinner.normalized_name:
+    pair_combinations_total = len(prepared_items) * (len(prepared_items) - 1) // 2
+    for first, second in combinations(prepared_items, 2):
+        if first.normalized_name == second.normalized_name:
             same_name_pairs_skipped += 1
             continue
 
+        total_price_yuan = round(
+            first.source["price_yuan"] + second.source["price_yuan"],
+            2,
+        )
+        if budget_limit is not None and total_price_yuan > budget_limit:
+            over_budget_pairs_skipped += 1
+            continue
+
+        # 组合确定后按热量、估算复合碳水和蛋白质分配午餐与晚餐。
+        lunch, dinner, lunch_priority, dinner_priority = _order_lunch_and_dinner(
+            first,
+            second,
+            daily_targets,
+        )
         considered_combinations += 1
         meal_totals = tuple(
             lunch.nutrients[index] + dinner.nutrients[index]
@@ -167,13 +207,12 @@ def recommend_takeaway_plans(
         candidate = PairCandidate(
             lunch=lunch,
             dinner=dinner,
-            total_price_yuan=round(
-                lunch.source["price_yuan"] + dinner.source["price_yuan"],
-                2,
-            ),
+            total_price_yuan=total_price_yuan,
             meal_totals=meal_totals,
             daily_totals=daily_totals,
             score=score,
+            lunch_priority_score=lunch_priority,
+            dinner_priority_score=dinner_priority,
         )
 
         if score <= 1e-12:
@@ -183,6 +222,8 @@ def recommend_takeaway_plans(
             _keep_best_three(top_three, candidate)
 
     if considered_combinations == 0:
+        if budget_limit is not None and over_budget_pairs_skipped > 0:
+            raise RecommendationError("no valid two-dish combinations fit within the budget")
         raise RecommendationError("no valid two-dish combinations remain after filtering")
 
     if exact_candidates:
@@ -203,8 +244,11 @@ def recommend_takeaway_plans(
         "mode": mode,
         "message": message,
         "breakfast": breakfast_data,
+        "budget_yuan": budget_limit,
         "candidate_filter": filter_report,
+        "pair_combinations_total": pair_combinations_total,
         "same_name_pairs_skipped": same_name_pairs_skipped,
+        "over_budget_pairs_skipped": over_budget_pairs_skipped,
         "evaluated_combinations": considered_combinations,
         "fully_scored_combinations": fully_scored_combinations,
         "pruned_combinations": pruned_combinations,
@@ -212,6 +256,54 @@ def recommend_takeaway_plans(
         "weights": {key: round(value, 6) for key, value in weights.items()},
         "plans": plans,
     }
+
+
+def _order_lunch_and_dinner(
+    first: PreparedDish,
+    second: PreparedDish,
+    daily_targets: dict[str, Any],
+) -> tuple[PreparedDish, PreparedDish, float, float]:
+    """按热量、估算复合碳水和蛋白质得分确定午餐与晚餐顺序。"""
+
+    first_score = _lunch_priority_score(first.nutrients, daily_targets)
+    second_score = _lunch_priority_score(second.nutrients, daily_targets)
+
+    # 分数相同则使用菜品 ID 稳定排序，确保相同输入始终得到相同餐次。
+    if (first_score, first.source["id"]) >= (second_score, second.source["id"]):
+        return first, second, first_score, second_score
+    return second, first, second_score, first_score
+
+
+def _lunch_priority_score(
+    nutrients: tuple[float, ...],
+    daily_targets: dict[str, Any],
+) -> float:
+    """计算午餐优先分，各项先除以每日目标中点进行归一化。"""
+
+    energy = nutrients[NUTRIENT_INDEX["energy_kcal"]]
+    carbohydrate = nutrients[NUTRIENT_INDEX["carbohydrate_g"]]
+    added_sugar = nutrients[NUTRIENT_INDEX["added_sugar_g"]]
+    protein = nutrients[NUTRIENT_INDEX["protein_g"]]
+
+    # 当前菜单没有独立复合碳水字段，用总碳水减添加糖作为可解释的近似值。
+    estimated_complex_carbohydrate = max(0.0, carbohydrate - added_sugar)
+    energy_target = _range_midpoint(daily_targets["energy_kcal"])
+    carbohydrate_target = _range_midpoint(daily_targets["carbohydrate_g"])
+    protein_target = _range_midpoint(daily_targets["protein_g"])
+
+    return (
+        energy / energy_target * LUNCH_PRIORITY_WEIGHTS["energy"]
+        + estimated_complex_carbohydrate
+        / carbohydrate_target
+        * LUNCH_PRIORITY_WEIGHTS["complex_carbohydrate"]
+        + protein / protein_target * LUNCH_PRIORITY_WEIGHTS["protein"]
+    )
+
+
+def _range_midpoint(target: dict[str, float]) -> float:
+    """返回营养目标区间中点，作为午餐优先分的归一化基准。"""
+
+    return (float(target["min"]) + float(target["max"])) / 2
 
 
 def filter_similar_dishes(
@@ -280,7 +372,10 @@ def filter_similar_dishes(
         "retained_count": len(retained),
         "removed_count": len(items) - len(retained),
         "similarity_threshold": threshold,
-        "rule": "each similar nutrition group keeps only its cheapest item",
+        "rule": (
+            "energy, protein, fat, carbohydrate and fiber must each be within 10%; "
+            "each similar group keeps only its cheapest item"
+        ),
         "removed_examples": removed[:20],
     }
     return retained, report
@@ -301,7 +396,7 @@ def _nutrition_is_similar(
 ) -> bool:
     """判断七项营养值的相对差异是否全部位于阈值内。"""
 
-    for nutrient in NUTRIENT_FIELDS:
+    for nutrient in SIMILARITY_NUTRIENT_FIELDS:
         first_value = float(first[nutrient])
         second_value = float(second[nutrient])
         denominator = max(abs(first_value), abs(second_value), 1.0)
@@ -367,6 +462,19 @@ def _candidate_to_plan(
     return {
         "lunch": _item_summary(candidate.lunch.source),
         "dinner": _item_summary(candidate.dinner.source),
+        "meal_ordering": {
+            "rule": "energy 40%, estimated complex carbohydrate 35%, protein 25%",
+            "lunch_priority_score": round(candidate.lunch_priority_score, 6),
+            "dinner_priority_score": round(candidate.dinner_priority_score, 6),
+            "lunch_estimated_complex_carbohydrate_g": round(
+                _estimated_complex_carbohydrate(candidate.lunch.nutrients),
+                2,
+            ),
+            "dinner_estimated_complex_carbohydrate_g": round(
+                _estimated_complex_carbohydrate(candidate.dinner.nutrients),
+                2,
+            ),
+        },
         "total_price_yuan": candidate.total_price_yuan,
         "meal_nutrition_totals": meal_totals,
         "daily_nutrition_totals": daily_totals,
@@ -374,6 +482,16 @@ def _candidate_to_plan(
         "deviations": deviations,
         "is_exact_match": candidate.score <= 1e-12,
     }
+
+
+def _estimated_complex_carbohydrate(nutrients: tuple[float, ...]) -> float:
+    """使用总碳水减添加糖估算复合碳水克数。"""
+
+    return max(
+        0.0,
+        nutrients[NUTRIENT_INDEX["carbohydrate_g"]]
+        - nutrients[NUTRIENT_INDEX["added_sugar_g"]],
+    )
 
 
 def _vector_to_dict(vector: tuple[float, ...]) -> dict[str, float]:

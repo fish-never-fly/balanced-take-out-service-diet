@@ -1,0 +1,424 @@
+# 数据集：synthetic_takeaway_menu_v3
+# 说明：用于推荐算法测试的420道模拟外卖数据：180道属于60个营养相似组，240道差异化菜品两两之间至少有一项核心营养差异超过10%。
+# 菜品数量：420
+菜品ID	平台	商家名称	菜品名称	分类	每份重量(g)	价格(元)	热量(kcal)	蛋白质(g)	脂肪(g)	碳水(g)	膳食纤维(g)	钠(mg)	添加糖(g)	营养近似组	价格档位	数据角色
+sim-001	meituan	街坊实惠餐厅	香草鸡胸糙米饭（实惠版）	杂粮饭	390	16.6	479	23.5	11.3	54.5	4.8	603	1.0	similar-001	economy	similar_group
+sim-002	eleme	城市标准食堂	香草鸡胸糙米饭（标准版）	杂粮饭	390	23.0	470	24.0	11.0	54.0	5.0	580	1.0	similar-001	standard	similar_group
+sim-003	jd	精品健康餐厅	香草鸡胸糙米饭（精品版）	杂粮饭	390	43.7	461	24.7	10.7	52.9	5.2	539	0.9	similar-001	premium	similar_group
+sim-004	eleme	街坊实惠餐厅	香草鸡胸藜麦饭（实惠版）	轻食饭	408	18.1	507	24.1	12.1	62.6	5.9	650	2.0	similar-002	economy	similar_group
+sim-005	jd	城市标准食堂	香草鸡胸藜麦饭（标准版）	轻食饭	408	25.1	497	24.6	11.7	62.0	6.1	625	2.0	similar-002	standard	similar_group
+sim-006	meituan	精品健康餐厅	香草鸡胸藜麦饭（精品版）	轻食饭	408	47.7	487	25.3	11.3	60.8	6.4	581	1.8	similar-002	premium	similar_group
+sim-007	jd	街坊实惠餐厅	香草鸡胸荞麦面（实惠版）	面食	426	19.6	534	24.7	12.8	70.7	7.0	697	3.1	similar-003	economy	similar_group
+sim-008	meituan	城市标准食堂	香草鸡胸荞麦面（标准版）	面食	426	27.2	524	25.2	12.4	70.0	7.2	670	3.0	similar-003	standard	similar_group
+sim-009	eleme	精品健康餐厅	香草鸡胸荞麦面（精品版）	面食	426	51.7	514	26.0	12.0	68.6	7.6	623	2.7	similar-003	premium	similar_group
+sim-010	meituan	街坊实惠餐厅	香草鸡胸全麦意面（实惠版）	意面	444	21.1	562	25.3	13.5	78.8	8.1	744	4.1	similar-004	economy	similar_group
+sim-011	eleme	城市标准食堂	香草鸡胸全麦意面（标准版）	意面	444	29.3	551	25.8	13.1	78.0	8.3	715	4.0	similar-004	standard	similar_group
+sim-012	jd	精品健康餐厅	香草鸡胸全麦意面（精品版）	意面	444	55.7	540	26.6	12.7	76.4	8.7	665	3.6	similar-004	premium	similar_group
+sim-013	eleme	街坊实惠餐厅	香草鸡胸紫米饭（实惠版）	杂粮饭	462	22.6	590	25.9	14.2	86.9	9.1	790	5.1	similar-005	economy	similar_group
+sim-014	jd	城市标准食堂	香草鸡胸紫米饭（标准版）	杂粮饭	462	31.4	578	26.4	13.8	86.0	9.4	760	5.0	similar-005	standard	similar_group
+sim-015	meituan	精品健康餐厅	香草鸡胸紫米饭（精品版）	杂粮饭	462	59.7	566	27.2	13.4	84.3	9.9	707	4.5	similar-005	premium	similar_group
+sim-016	jd	街坊实惠餐厅	香草鸡胸五谷饭（实惠版）	杂粮饭	480	24.1	617	26.5	14.9	94.9	10.2	837	6.1	similar-006	economy	similar_group
+sim-017	meituan	城市标准食堂	香草鸡胸五谷饭（标准版）	杂粮饭	480	33.5	605	27.0	14.5	94.0	10.5	805	6.0	similar-006	standard	similar_group
+sim-018	eleme	精品健康餐厅	香草鸡胸五谷饭（精品版）	杂粮饭	480	63.6	593	27.8	14.1	92.1	11.0	749	5.4	similar-006	premium	similar_group
+sim-019	meituan	街坊实惠餐厅	黑椒牛肉糙米饭（实惠版）	杂粮饭	394	17.8	499	25.9	14.2	57.6	5.3	702	2.0	similar-007	economy	similar_group
+sim-020	eleme	城市标准食堂	黑椒牛肉糙米饭（标准版）	杂粮饭	394	24.7	489	26.4	13.8	57.0	5.5	675	2.0	similar-007	standard	similar_group
+sim-021	jd	精品健康餐厅	黑椒牛肉糙米饭（精品版）	杂粮饭	394	46.9	479	27.2	13.4	55.9	5.8	628	1.8	similar-007	premium	similar_group
+sim-022	eleme	街坊实惠餐厅	黑椒牛肉藜麦饭（实惠版）	轻食饭	412	19.3	526	26.5	14.9	65.7	6.4	749	3.1	similar-008	economy	similar_group
+sim-023	jd	城市标准食堂	黑椒牛肉藜麦饭（标准版）	轻食饭	412	26.8	516	27.0	14.5	65.0	6.6	720	3.0	similar-008	standard	similar_group
+sim-024	meituan	精品健康餐厅	黑椒牛肉藜麦饭（精品版）	轻食饭	412	50.9	506	27.8	14.1	63.7	6.9	670	2.7	similar-008	premium	similar_group
+sim-025	jd	街坊实惠餐厅	黑椒牛肉荞麦面（实惠版）	面食	430	20.8	554	27.0	15.7	73.7	7.5	796	4.1	similar-009	economy	similar_group
+sim-026	meituan	城市标准食堂	黑椒牛肉荞麦面（标准版）	面食	430	28.9	543	27.6	15.2	73.0	7.7	765	4.0	similar-009	standard	similar_group
+sim-027	eleme	精品健康餐厅	黑椒牛肉荞麦面（精品版）	面食	430	54.9	532	28.4	14.7	71.5	8.1	711	3.6	similar-009	premium	similar_group
+sim-028	meituan	街坊实惠餐厅	黑椒牛肉全麦意面（实惠版）	意面	448	22.3	581	27.6	16.4	81.8	8.5	842	5.1	similar-010	economy	similar_group
+sim-029	eleme	城市标准食堂	黑椒牛肉全麦意面（标准版）	意面	448	31.0	570	28.2	15.9	81.0	8.8	810	5.0	similar-010	standard	similar_group
+sim-030	jd	精品健康餐厅	黑椒牛肉全麦意面（精品版）	意面	448	58.9	559	29.0	15.4	79.4	9.2	753	4.5	similar-010	premium	similar_group
+sim-031	eleme	街坊实惠餐厅	黑椒牛肉紫米饭（实惠版）	杂粮饭	466	23.8	609	28.2	17.1	89.9	9.6	889	6.1	similar-011	economy	similar_group
+sim-032	jd	城市标准食堂	黑椒牛肉紫米饭（标准版）	杂粮饭	466	33.1	597	28.8	16.6	89.0	9.9	855	6.0	similar-011	standard	similar_group
+sim-033	meituan	精品健康餐厅	黑椒牛肉紫米饭（精品版）	杂粮饭	466	62.9	585	29.7	16.1	87.2	10.4	795	5.4	similar-011	premium	similar_group
+sim-034	jd	街坊实惠餐厅	黑椒牛肉五谷饭（实惠版）	杂粮饭	484	25.3	636	28.8	17.8	98.0	10.7	936	1.0	similar-012	economy	similar_group
+sim-035	meituan	城市标准食堂	黑椒牛肉五谷饭（标准版）	杂粮饭	484	35.2	624	29.4	17.3	97.0	11.0	900	1.0	similar-012	standard	similar_group
+sim-036	eleme	精品健康餐厅	黑椒牛肉五谷饭（精品版）	杂粮饭	484	66.9	612	30.3	16.8	95.1	11.6	837	0.9	similar-012	premium	similar_group
+sim-037	meituan	街坊实惠餐厅	蒜香虾仁糙米饭（实惠版）	杂粮饭	398	19.0	518	28.2	17.1	60.6	5.8	801	3.1	similar-013	economy	similar_group
+sim-038	eleme	城市标准食堂	蒜香虾仁糙米饭（标准版）	杂粮饭	398	26.4	508	28.8	16.6	60.0	6.0	770	3.0	similar-013	standard	similar_group
+sim-039	jd	精品健康餐厅	蒜香虾仁糙米饭（精品版）	杂粮饭	398	50.2	498	29.7	16.1	58.8	6.3	716	2.7	similar-013	premium	similar_group
+sim-040	eleme	街坊实惠餐厅	蒜香虾仁藜麦饭（实惠版）	轻食饭	416	20.5	546	28.8	17.8	68.7	6.9	848	4.1	similar-014	economy	similar_group
+sim-041	jd	城市标准食堂	蒜香虾仁藜麦饭（标准版）	轻食饭	416	28.5	535	29.4	17.3	68.0	7.1	815	4.0	similar-014	standard	similar_group
+sim-042	meituan	精品健康餐厅	蒜香虾仁藜麦饭（精品版）	轻食饭	416	54.1	524	30.3	16.8	66.6	7.5	758	3.6	similar-014	premium	similar_group
+sim-043	jd	街坊实惠餐厅	蒜香虾仁荞麦面（实惠版）	面食	434	22.0	573	29.4	18.5	76.8	8.0	894	5.1	similar-015	economy	similar_group
+sim-044	meituan	城市标准食堂	蒜香虾仁荞麦面（标准版）	面食	434	30.6	562	30.0	18.0	76.0	8.2	860	5.0	similar-015	standard	similar_group
+sim-045	eleme	精品健康餐厅	蒜香虾仁荞麦面（精品版）	面食	434	58.1	551	30.9	17.5	74.5	8.6	800	4.5	similar-015	premium	similar_group
+sim-046	meituan	街坊实惠餐厅	蒜香虾仁全麦意面（实惠版）	意面	452	23.5	601	30.0	19.3	84.8	9.0	941	6.1	similar-016	economy	similar_group
+sim-047	eleme	城市标准食堂	蒜香虾仁全麦意面（标准版）	意面	452	32.7	589	30.6	18.7	84.0	9.3	905	6.0	similar-016	standard	similar_group
+sim-048	jd	精品健康餐厅	蒜香虾仁全麦意面（精品版）	意面	452	62.1	577	31.5	18.1	82.3	9.8	842	5.4	similar-016	premium	similar_group
+sim-049	eleme	街坊实惠餐厅	蒜香虾仁紫米饭（实惠版）	杂粮饭	470	25.1	628	30.6	20.0	92.9	10.1	988	1.0	similar-017	economy	similar_group
+sim-050	jd	城市标准食堂	蒜香虾仁紫米饭（标准版）	杂粮饭	470	34.8	616	31.2	19.4	92.0	10.4	950	1.0	similar-017	standard	similar_group
+sim-051	meituan	精品健康餐厅	蒜香虾仁紫米饭（精品版）	杂粮饭	470	66.1	604	32.1	18.8	90.2	10.9	884	0.9	similar-017	premium	similar_group
+sim-052	jd	街坊实惠餐厅	蒜香虾仁五谷饭（实惠版）	杂粮饭	488	26.6	656	31.2	20.7	101.0	11.2	1035	2.0	similar-018	economy	similar_group
+sim-053	meituan	城市标准食堂	蒜香虾仁五谷饭（标准版）	杂粮饭	488	36.9	643	31.8	20.1	100.0	11.5	995	2.0	similar-018	standard	similar_group
+sim-054	eleme	精品健康餐厅	蒜香虾仁五谷饭（精品版）	杂粮饭	488	70.1	630	32.8	19.5	98.0	12.1	925	1.8	similar-018	premium	similar_group
+sim-055	meituan	街坊实惠餐厅	清蒸鱼柳糙米饭（实惠版）	杂粮饭	402	20.2	538	30.6	20.0	54.5	6.3	900	4.1	similar-019	economy	similar_group
+sim-056	eleme	城市标准食堂	清蒸鱼柳糙米饭（标准版）	杂粮饭	402	28.1	527	31.2	19.4	54.0	6.5	865	4.0	similar-019	standard	similar_group
+sim-057	jd	精品健康餐厅	清蒸鱼柳糙米饭（精品版）	杂粮饭	402	53.4	516	32.1	18.8	52.9	6.8	804	3.6	similar-019	premium	similar_group
+sim-058	eleme	街坊实惠餐厅	清蒸鱼柳藜麦饭（实惠版）	轻食饭	420	21.7	565	31.2	20.7	62.6	7.4	946	5.1	similar-020	economy	similar_group
+sim-059	jd	城市标准食堂	清蒸鱼柳藜麦饭（标准版）	轻食饭	420	30.2	554	31.8	20.1	62.0	7.6	910	5.0	similar-020	standard	similar_group
+sim-060	meituan	精品健康餐厅	清蒸鱼柳藜麦饭（精品版）	轻食饭	420	57.4	543	32.8	19.5	60.8	8.0	846	4.5	similar-020	premium	similar_group
+sim-061	jd	街坊实惠餐厅	清蒸鱼柳荞麦面（实惠版）	面食	438	23.3	593	31.8	21.4	70.7	8.4	993	6.1	similar-021	economy	similar_group
+sim-062	meituan	城市标准食堂	清蒸鱼柳荞麦面（标准版）	面食	438	32.3	581	32.4	20.8	70.0	8.7	955	6.0	similar-021	standard	similar_group
+sim-063	eleme	精品健康餐厅	清蒸鱼柳荞麦面（精品版）	面食	438	61.4	569	33.4	20.2	68.6	9.1	888	5.4	similar-021	premium	similar_group
+sim-064	meituan	街坊实惠餐厅	清蒸鱼柳全麦意面（实惠版）	意面	456	24.8	620	32.3	22.1	78.8	9.5	1040	1.0	similar-022	economy	similar_group
+sim-065	eleme	城市标准食堂	清蒸鱼柳全麦意面（标准版）	意面	456	34.4	608	33.0	21.5	78.0	9.8	1000	1.0	similar-022	standard	similar_group
+sim-066	jd	精品健康餐厅	清蒸鱼柳全麦意面（精品版）	意面	456	65.4	596	34.0	20.9	76.4	10.3	930	0.9	similar-022	premium	similar_group
+sim-067	eleme	街坊实惠餐厅	清蒸鱼柳紫米饭（实惠版）	杂粮饭	474	26.3	648	32.9	22.9	86.9	10.6	1087	2.0	similar-023	economy	similar_group
+sim-068	jd	城市标准食堂	清蒸鱼柳紫米饭（标准版）	杂粮饭	474	36.5	635	33.6	22.2	86.0	10.9	1045	2.0	similar-023	standard	similar_group
+sim-069	meituan	精品健康餐厅	清蒸鱼柳紫米饭（精品版）	杂粮饭	474	69.3	622	34.6	21.5	84.3	11.4	972	1.8	similar-023	premium	similar_group
+sim-070	jd	街坊实惠餐厅	清蒸鱼柳五谷饭（实惠版）	杂粮饭	492	27.8	675	33.5	23.6	94.9	11.6	1134	3.1	similar-024	economy	similar_group
+sim-071	meituan	城市标准食堂	清蒸鱼柳五谷饭（标准版）	杂粮饭	492	38.6	662	34.2	22.9	94.0	12.0	1090	3.0	similar-024	standard	similar_group
+sim-072	eleme	精品健康餐厅	清蒸鱼柳五谷饭（精品版）	杂粮饭	492	73.3	649	35.2	22.2	92.1	12.6	1014	2.7	similar-024	premium	similar_group
+sim-073	meituan	街坊实惠餐厅	菌菇豆腐糙米饭（实惠版）	杂粮饭	406	21.5	557	32.9	22.9	57.6	4.8	998	5.1	similar-025	economy	similar_group
+sim-074	eleme	城市标准食堂	菌菇豆腐糙米饭（标准版）	杂粮饭	406	29.8	546	33.6	22.2	57.0	5.0	960	5.0	similar-025	standard	similar_group
+sim-075	jd	精品健康餐厅	菌菇豆腐糙米饭（精品版）	杂粮饭	406	56.6	535	34.6	21.5	55.9	5.2	893	4.5	similar-025	premium	similar_group
+sim-076	eleme	街坊实惠餐厅	菌菇豆腐藜麦饭（实惠版）	轻食饭	424	23.0	584	33.5	23.6	65.7	5.9	1045	6.1	similar-026	economy	similar_group
+sim-077	jd	城市标准食堂	菌菇豆腐藜麦饭（标准版）	轻食饭	424	31.9	573	34.2	22.9	65.0	6.1	1005	6.0	similar-026	standard	similar_group
+sim-078	meituan	精品健康餐厅	菌菇豆腐藜麦饭（精品版）	轻食饭	424	60.6	562	35.2	22.2	63.7	6.4	935	5.4	similar-026	premium	similar_group
+sim-079	jd	街坊实惠餐厅	菌菇豆腐荞麦面（实惠版）	面食	442	24.5	612	34.1	24.3	73.7	7.0	1092	1.0	similar-027	economy	similar_group
+sim-080	meituan	城市标准食堂	菌菇豆腐荞麦面（标准版）	面食	442	34.0	600	34.8	23.6	73.0	7.2	1050	1.0	similar-027	standard	similar_group
+sim-081	eleme	精品健康餐厅	菌菇豆腐荞麦面（精品版）	面食	442	64.6	588	35.8	22.9	71.5	7.6	976	0.9	similar-027	premium	similar_group
+sim-082	meituan	街坊实惠餐厅	菌菇豆腐全麦意面（实惠版）	意面	460	26.0	640	34.7	25.0	81.8	8.1	1139	2.0	similar-028	economy	similar_group
+sim-083	eleme	城市标准食堂	菌菇豆腐全麦意面（标准版）	意面	460	36.1	627	35.4	24.3	81.0	8.3	1095	2.0	similar-028	standard	similar_group
+sim-084	jd	精品健康餐厅	菌菇豆腐全麦意面（精品版）	意面	460	68.6	614	36.5	23.6	79.4	8.7	1018	1.8	similar-028	premium	similar_group
+sim-085	eleme	街坊实惠餐厅	菌菇豆腐紫米饭（实惠版）	杂粮饭	478	27.5	667	35.3	25.8	89.9	9.1	1186	3.1	similar-029	economy	similar_group
+sim-086	jd	城市标准食堂	菌菇豆腐紫米饭（标准版）	杂粮饭	478	38.2	654	36.0	25.0	89.0	9.4	1140	3.0	similar-029	standard	similar_group
+sim-087	meituan	精品健康餐厅	菌菇豆腐紫米饭（精品版）	杂粮饭	478	72.6	641	37.1	24.2	87.2	9.9	1060	2.7	similar-029	premium	similar_group
+sim-088	jd	街坊实惠餐厅	菌菇豆腐五谷饭（实惠版）	杂粮饭	496	29.0	695	35.9	26.5	98.0	10.2	1232	4.1	similar-030	economy	similar_group
+sim-089	meituan	城市标准食堂	菌菇豆腐五谷饭（标准版）	杂粮饭	496	40.3	681	36.6	25.7	97.0	10.5	1185	4.0	similar-030	standard	similar_group
+sim-090	eleme	精品健康餐厅	菌菇豆腐五谷饭（精品版）	杂粮饭	496	76.6	667	37.7	24.9	95.1	11.0	1102	3.6	similar-030	premium	similar_group
+sim-091	meituan	街坊实惠餐厅	番茄鸡蛋糙米饭（实惠版）	杂粮饭	410	22.7	576	35.3	11.3	60.6	5.3	1097	6.1	similar-031	economy	similar_group
+sim-092	eleme	城市标准食堂	番茄鸡蛋糙米饭（标准版）	杂粮饭	410	31.5	565	36.0	11.0	60.0	5.5	1055	6.0	similar-031	standard	similar_group
+sim-093	jd	精品健康餐厅	番茄鸡蛋糙米饭（精品版）	杂粮饭	410	59.8	554	37.1	10.7	58.8	5.8	981	5.4	similar-031	premium	similar_group
+sim-094	eleme	街坊实惠餐厅	番茄鸡蛋藜麦饭（实惠版）	轻食饭	428	24.2	604	35.9	12.1	68.7	6.4	1144	1.0	similar-032	economy	similar_group
+sim-095	jd	城市标准食堂	番茄鸡蛋藜麦饭（标准版）	轻食饭	428	33.6	592	36.6	11.7	68.0	6.6	1100	1.0	similar-032	standard	similar_group
+sim-096	meituan	精品健康餐厅	番茄鸡蛋藜麦饭（精品版）	轻食饭	428	63.8	580	37.7	11.3	66.6	6.9	1023	0.9	similar-032	premium	similar_group
+sim-097	jd	街坊实惠餐厅	番茄鸡蛋荞麦面（实惠版）	面食	446	25.7	631	36.5	12.8	76.8	7.5	1191	2.0	similar-033	economy	similar_group
+sim-098	meituan	城市标准食堂	番茄鸡蛋荞麦面（标准版）	面食	446	35.7	619	37.2	12.4	76.0	7.7	1145	2.0	similar-033	standard	similar_group
+sim-099	eleme	精品健康餐厅	番茄鸡蛋荞麦面（精品版）	面食	446	67.8	607	38.3	12.0	74.5	8.1	1065	1.8	similar-033	premium	similar_group
+sim-100	meituan	街坊实惠餐厅	番茄鸡蛋全麦意面（实惠版）	意面	464	27.2	659	37.0	13.5	84.8	8.5	1238	3.1	similar-034	economy	similar_group
+sim-101	eleme	城市标准食堂	番茄鸡蛋全麦意面（标准版）	意面	464	37.8	646	37.8	13.1	84.0	8.8	1190	3.0	similar-034	standard	similar_group
+sim-102	jd	精品健康餐厅	番茄鸡蛋全麦意面（精品版）	意面	464	71.8	633	38.9	12.7	82.3	9.2	1107	2.7	similar-034	premium	similar_group
+sim-103	eleme	街坊实惠餐厅	番茄鸡蛋紫米饭（实惠版）	杂粮饭	482	28.7	686	37.6	14.2	92.9	9.6	1284	4.1	similar-035	economy	similar_group
+sim-104	jd	城市标准食堂	番茄鸡蛋紫米饭（标准版）	杂粮饭	482	39.9	673	38.4	13.8	92.0	9.9	1235	4.0	similar-035	standard	similar_group
+sim-105	meituan	精品健康餐厅	番茄鸡蛋紫米饭（精品版）	杂粮饭	482	75.8	660	39.6	13.4	90.2	10.4	1149	3.6	similar-035	premium	similar_group
+sim-106	jd	街坊实惠餐厅	番茄鸡蛋五谷饭（实惠版）	杂粮饭	500	30.2	714	38.2	14.9	101.0	10.7	1331	5.1	similar-036	economy	similar_group
+sim-107	meituan	城市标准食堂	番茄鸡蛋五谷饭（标准版）	杂粮饭	500	42.0	700	39.0	14.5	100.0	11.0	1280	5.0	similar-036	standard	similar_group
+sim-108	eleme	精品健康餐厅	番茄鸡蛋五谷饭（精品版）	杂粮饭	500	79.8	686	40.2	14.1	98.0	11.6	1190	4.5	similar-036	premium	similar_group
+sim-109	meituan	街坊实惠餐厅	金枪鱼玉米糙米饭（实惠版）	杂粮饭	414	23.9	596	37.6	14.2	54.5	5.8	603	1.0	similar-037	economy	similar_group
+sim-110	eleme	城市标准食堂	金枪鱼玉米糙米饭（标准版）	杂粮饭	414	33.2	584	38.4	13.8	54.0	6.0	580	1.0	similar-037	standard	similar_group
+sim-111	jd	精品健康餐厅	金枪鱼玉米糙米饭（精品版）	杂粮饭	414	63.1	572	39.6	13.4	52.9	6.3	539	0.9	similar-037	premium	similar_group
+sim-112	eleme	街坊实惠餐厅	金枪鱼玉米藜麦饭（实惠版）	轻食饭	432	25.4	623	38.2	14.9	62.6	6.9	650	2.0	similar-038	economy	similar_group
+sim-113	jd	城市标准食堂	金枪鱼玉米藜麦饭（标准版）	轻食饭	432	35.3	611	39.0	14.5	62.0	7.1	625	2.0	similar-038	standard	similar_group
+sim-114	meituan	精品健康餐厅	金枪鱼玉米藜麦饭（精品版）	轻食饭	432	67.1	599	40.2	14.1	60.8	7.5	581	1.8	similar-038	premium	similar_group
+sim-115	jd	街坊实惠餐厅	金枪鱼玉米荞麦面（实惠版）	面食	450	26.9	651	38.8	15.7	70.7	8.0	697	3.1	similar-039	economy	similar_group
+sim-116	meituan	城市标准食堂	金枪鱼玉米荞麦面（标准版）	面食	450	37.4	638	39.6	15.2	70.0	8.2	670	3.0	similar-039	standard	similar_group
+sim-117	eleme	精品健康餐厅	金枪鱼玉米荞麦面（精品版）	面食	450	71.1	625	40.8	14.7	68.6	8.6	623	2.7	similar-039	premium	similar_group
+sim-118	meituan	街坊实惠餐厅	金枪鱼玉米全麦意面（实惠版）	意面	468	28.4	678	39.4	16.4	78.8	9.0	744	4.1	similar-040	economy	similar_group
+sim-119	eleme	城市标准食堂	金枪鱼玉米全麦意面（标准版）	意面	468	39.5	665	40.2	15.9	78.0	9.3	715	4.0	similar-040	standard	similar_group
+sim-120	jd	精品健康餐厅	金枪鱼玉米全麦意面（精品版）	意面	468	75.0	652	41.4	15.4	76.4	9.8	665	3.6	similar-040	premium	similar_group
+sim-121	eleme	街坊实惠餐厅	金枪鱼玉米紫米饭（实惠版）	杂粮饭	486	30.0	706	40.0	17.1	86.9	10.1	790	5.1	similar-041	economy	similar_group
+sim-122	jd	城市标准食堂	金枪鱼玉米紫米饭（标准版）	杂粮饭	486	41.6	692	40.8	16.6	86.0	10.4	760	5.0	similar-041	standard	similar_group
+sim-123	meituan	精品健康餐厅	金枪鱼玉米紫米饭（精品版）	杂粮饭	486	79.0	678	42.0	16.1	84.3	10.9	707	4.5	similar-041	premium	similar_group
+sim-124	jd	街坊实惠餐厅	金枪鱼玉米五谷饭（实惠版）	杂粮饭	504	31.5	733	40.6	17.8	94.9	11.2	837	6.1	similar-042	economy	similar_group
+sim-125	meituan	城市标准食堂	金枪鱼玉米五谷饭（标准版）	杂粮饭	504	43.7	719	41.4	17.3	94.0	11.5	805	6.0	similar-042	standard	similar_group
+sim-126	eleme	精品健康餐厅	金枪鱼玉米五谷饭（精品版）	杂粮饭	504	83.0	705	42.6	16.8	92.1	12.1	749	5.4	similar-042	premium	similar_group
+sim-127	meituan	街坊实惠餐厅	香煎三文鱼糙米饭（实惠版）	杂粮饭	418	25.1	615	40.0	17.1	57.6	6.3	702	2.0	similar-043	economy	similar_group
+sim-128	eleme	城市标准食堂	香煎三文鱼糙米饭（标准版）	杂粮饭	418	34.9	603	40.8	16.6	57.0	6.5	675	2.0	similar-043	standard	similar_group
+sim-129	jd	精品健康餐厅	香煎三文鱼糙米饭（精品版）	杂粮饭	418	66.3	591	42.0	16.1	55.9	6.8	628	1.8	similar-043	premium	similar_group
+sim-130	eleme	街坊实惠餐厅	香煎三文鱼藜麦饭（实惠版）	轻食饭	436	26.6	643	40.6	17.8	65.7	7.4	749	3.1	similar-044	economy	similar_group
+sim-131	jd	城市标准食堂	香煎三文鱼藜麦饭（标准版）	轻食饭	436	37.0	630	41.4	17.3	65.0	7.6	720	3.0	similar-044	standard	similar_group
+sim-132	meituan	精品健康餐厅	香煎三文鱼藜麦饭（精品版）	轻食饭	436	70.3	617	42.6	16.8	63.7	8.0	670	2.7	similar-044	premium	similar_group
+sim-133	jd	街坊实惠餐厅	香煎三文鱼荞麦面（实惠版）	面食	454	28.2	670	41.2	18.5	73.7	8.4	796	4.1	similar-045	economy	similar_group
+sim-134	meituan	城市标准食堂	香煎三文鱼荞麦面（标准版）	面食	454	39.1	657	42.0	18.0	73.0	8.7	765	4.0	similar-045	standard	similar_group
+sim-135	eleme	精品健康餐厅	香煎三文鱼荞麦面（精品版）	面食	454	74.3	644	43.3	17.5	71.5	9.1	711	3.6	similar-045	premium	similar_group
+sim-136	meituan	街坊实惠餐厅	香煎三文鱼全麦意面（实惠版）	意面	472	29.7	698	41.7	19.3	81.8	9.5	842	5.1	similar-046	economy	similar_group
+sim-137	eleme	城市标准食堂	香煎三文鱼全麦意面（标准版）	意面	472	41.2	684	42.6	18.7	81.0	9.8	810	5.0	similar-046	standard	similar_group
+sim-138	jd	精品健康餐厅	香煎三文鱼全麦意面（精品版）	意面	472	78.3	670	43.9	18.1	79.4	10.3	753	4.5	similar-046	premium	similar_group
+sim-139	eleme	街坊实惠餐厅	香煎三文鱼紫米饭（实惠版）	杂粮饭	490	31.2	725	42.3	20.0	89.9	10.6	889	6.1	similar-047	economy	similar_group
+sim-140	jd	城市标准食堂	香煎三文鱼紫米饭（标准版）	杂粮饭	490	43.3	711	43.2	19.4	89.0	10.9	855	6.0	similar-047	standard	similar_group
+sim-141	meituan	精品健康餐厅	香煎三文鱼紫米饭（精品版）	杂粮饭	490	82.3	697	44.5	18.8	87.2	11.4	795	5.4	similar-047	premium	similar_group
+sim-142	jd	街坊实惠餐厅	香煎三文鱼五谷饭（实惠版）	杂粮饭	508	32.7	753	42.9	20.7	98.0	11.6	936	1.0	similar-048	economy	similar_group
+sim-143	meituan	城市标准食堂	香煎三文鱼五谷饭（标准版）	杂粮饭	508	45.4	738	43.8	20.1	97.0	12.0	900	1.0	similar-048	standard	similar_group
+sim-144	eleme	精品健康餐厅	香煎三文鱼五谷饭（精品版）	杂粮饭	508	86.3	723	45.1	19.5	95.1	12.6	837	0.9	similar-048	premium	similar_group
+sim-145	meituan	街坊实惠餐厅	照烧鸡腿糙米饭（实惠版）	杂粮饭	422	26.4	634	42.3	20.0	60.6	4.8	801	3.1	similar-049	economy	similar_group
+sim-146	eleme	城市标准食堂	照烧鸡腿糙米饭（标准版）	杂粮饭	422	36.6	622	43.2	19.4	60.0	5.0	770	3.0	similar-049	standard	similar_group
+sim-147	jd	精品健康餐厅	照烧鸡腿糙米饭（精品版）	杂粮饭	422	69.5	610	44.5	18.8	58.8	5.2	716	2.7	similar-049	premium	similar_group
+sim-148	eleme	街坊实惠餐厅	照烧鸡腿藜麦饭（实惠版）	轻食饭	440	27.9	662	42.9	20.7	68.7	5.9	848	4.1	similar-050	economy	similar_group
+sim-149	jd	城市标准食堂	照烧鸡腿藜麦饭（标准版）	轻食饭	440	38.7	649	43.8	20.1	68.0	6.1	815	4.0	similar-050	standard	similar_group
+sim-150	meituan	精品健康餐厅	照烧鸡腿藜麦饭（精品版）	轻食饭	440	73.5	636	45.1	19.5	66.6	6.4	758	3.6	similar-050	premium	similar_group
+sim-151	jd	街坊实惠餐厅	照烧鸡腿荞麦面（实惠版）	面食	458	29.4	690	43.5	21.4	76.8	7.0	894	5.1	similar-051	economy	similar_group
+sim-152	meituan	城市标准食堂	照烧鸡腿荞麦面（标准版）	面食	458	40.8	676	44.4	20.8	76.0	7.2	860	5.0	similar-051	standard	similar_group
+sim-153	eleme	精品健康餐厅	照烧鸡腿荞麦面（精品版）	面食	458	77.5	662	45.7	20.2	74.5	7.6	800	4.5	similar-051	premium	similar_group
+sim-154	meituan	街坊实惠餐厅	照烧鸡腿全麦意面（实惠版）	意面	476	30.9	717	44.1	22.1	84.8	8.1	941	6.1	similar-052	economy	similar_group
+sim-155	eleme	城市标准食堂	照烧鸡腿全麦意面（标准版）	意面	476	42.9	703	45.0	21.5	84.0	8.3	905	6.0	similar-052	standard	similar_group
+sim-156	jd	精品健康餐厅	照烧鸡腿全麦意面（精品版）	意面	476	81.5	689	46.4	20.9	82.3	8.7	842	5.4	similar-052	premium	similar_group
+sim-157	eleme	街坊实惠餐厅	照烧鸡腿紫米饭（实惠版）	杂粮饭	494	32.4	745	44.7	22.9	92.9	9.1	988	1.0	similar-053	economy	similar_group
+sim-158	jd	城市标准食堂	照烧鸡腿紫米饭（标准版）	杂粮饭	494	45.0	730	45.6	22.2	92.0	9.4	950	1.0	similar-053	standard	similar_group
+sim-159	meituan	精品健康餐厅	照烧鸡腿紫米饭（精品版）	杂粮饭	494	85.5	715	47.0	21.5	90.2	9.9	884	0.9	similar-053	premium	similar_group
+sim-160	jd	街坊实惠餐厅	照烧鸡腿五谷饭（实惠版）	杂粮饭	512	33.9	772	45.3	23.6	101.0	10.2	1035	2.0	similar-054	economy	similar_group
+sim-161	meituan	城市标准食堂	照烧鸡腿五谷饭（标准版）	杂粮饭	512	47.1	757	46.2	22.9	100.0	10.5	995	2.0	similar-054	standard	similar_group
+sim-162	eleme	精品健康餐厅	照烧鸡腿五谷饭（精品版）	杂粮饭	512	89.5	742	47.6	22.2	98.0	11.0	925	1.8	similar-054	premium	similar_group
+sim-163	meituan	街坊实惠餐厅	芹菜瘦肉糙米饭（实惠版）	杂粮饭	426	27.6	654	44.7	22.9	54.5	5.3	900	4.1	similar-055	economy	similar_group
+sim-164	eleme	城市标准食堂	芹菜瘦肉糙米饭（标准版）	杂粮饭	426	38.3	641	45.6	22.2	54.0	5.5	865	4.0	similar-055	standard	similar_group
+sim-165	jd	精品健康餐厅	芹菜瘦肉糙米饭（精品版）	杂粮饭	426	72.8	628	47.0	21.5	52.9	5.8	804	3.6	similar-055	premium	similar_group
+sim-166	eleme	街坊实惠餐厅	芹菜瘦肉藜麦饭（实惠版）	轻食饭	444	29.1	681	45.3	23.6	62.6	6.4	946	5.1	similar-056	economy	similar_group
+sim-167	jd	城市标准食堂	芹菜瘦肉藜麦饭（标准版）	轻食饭	444	40.4	668	46.2	22.9	62.0	6.6	910	5.0	similar-056	standard	similar_group
+sim-168	meituan	精品健康餐厅	芹菜瘦肉藜麦饭（精品版）	轻食饭	444	76.8	655	47.6	22.2	60.8	6.9	846	4.5	similar-056	premium	similar_group
+sim-169	jd	街坊实惠餐厅	芹菜瘦肉荞麦面（实惠版）	面食	462	30.6	709	45.9	24.3	70.7	7.5	993	6.1	similar-057	economy	similar_group
+sim-170	meituan	城市标准食堂	芹菜瘦肉荞麦面（标准版）	面食	462	42.5	695	46.8	23.6	70.0	7.7	955	6.0	similar-057	standard	similar_group
+sim-171	eleme	精品健康餐厅	芹菜瘦肉荞麦面（精品版）	面食	462	80.8	681	48.2	22.9	68.6	8.1	888	5.4	similar-057	premium	similar_group
+sim-172	meituan	街坊实惠餐厅	芹菜瘦肉全麦意面（实惠版）	意面	480	32.1	736	46.5	25.0	78.8	8.5	1040	1.0	similar-058	economy	similar_group
+sim-173	eleme	城市标准食堂	芹菜瘦肉全麦意面（标准版）	意面	480	44.6	722	47.4	24.3	78.0	8.8	1000	1.0	similar-058	standard	similar_group
+sim-174	jd	精品健康餐厅	芹菜瘦肉全麦意面（精品版）	意面	480	84.7	708	48.8	23.6	76.4	9.2	930	0.9	similar-058	premium	similar_group
+sim-175	eleme	街坊实惠餐厅	芹菜瘦肉紫米饭（实惠版）	杂粮饭	498	33.6	764	47.0	25.8	86.9	9.6	1087	2.0	similar-059	economy	similar_group
+sim-176	jd	城市标准食堂	芹菜瘦肉紫米饭（标准版）	杂粮饭	498	46.7	749	48.0	25.0	86.0	9.9	1045	2.0	similar-059	standard	similar_group
+sim-177	meituan	精品健康餐厅	芹菜瘦肉紫米饭（精品版）	杂粮饭	498	88.7	734	49.4	24.2	84.3	10.4	972	1.8	similar-059	premium	similar_group
+sim-178	jd	街坊实惠餐厅	芹菜瘦肉五谷饭（实惠版）	杂粮饭	516	35.1	792	47.6	26.5	94.9	10.7	1134	3.1	similar-060	economy	similar_group
+sim-179	meituan	城市标准食堂	芹菜瘦肉五谷饭（标准版）	杂粮饭	516	48.8	776	48.6	25.7	94.0	11.0	1090	3.0	similar-060	standard	similar_group
+sim-180	eleme	精品健康餐厅	芹菜瘦肉五谷饭（精品版）	杂粮饭	516	92.7	760	50.1	24.9	92.1	11.6	1014	2.7	similar-060	premium	similar_group
+sim-181	meituan	差异化营养厨房01	特色营养套餐001	差异化套餐1	300	18.0	272	15.0	8.0	35.0	3.0	350	0		distinct	distinct
+sim-182	eleme	差异化营养厨房02	特色营养套餐002	差异化套餐2	317	25.3	399	15.0	11.0	60.0	5.5	423	3		distinct	distinct
+sim-183	jd	差异化营养厨房03	特色营养套餐003	差异化套餐3	334	32.6	603	15.0	15.0	102.0	10.5	496	6		distinct	distinct
+sim-184	meituan	差异化营养厨房04	特色营养套餐004	差异化套餐4	351	39.0	561	15.0	29.0	60.0	4.0	569	9		distinct	distinct
+sim-185	eleme	差异化营养厨房05	特色营养套餐005	差异化套餐5	368	46.3	556	19.0	8.0	102.0	7.5	642	12		distinct	distinct
+sim-186	jd	差异化营养厨房06	特色营养套餐006	差异化套餐6	385	53.6	451	19.0	15.0	60.0	3.0	715	0		distinct	distinct
+sim-187	meituan	差异化营养厨房07	特色营养套餐007	差异化套餐7	402	60.0	673	19.0	21.0	102.0	5.5	788	3		distinct	distinct
+sim-188	eleme	差异化营养厨房08	特色营养套餐008	差异化套餐8	419	67.3	352	24.0	8.0	46.0	10.5	861	6		distinct	distinct
+sim-189	jd	差异化营养厨房09	特色营养套餐009	差异化套餐1	436	19.6	603	24.0	11.0	102.0	4.0	934	9		distinct	distinct
+sim-190	meituan	差异化营养厨房10	特色营养套餐010	差异化套餐2	453	26.0	469	24.0	21.0	46.0	7.5	1007	12		distinct	distinct
+sim-191	eleme	差异化营养厨房11	特色营养套餐011	差异化套餐3	470	33.3	765	24.0	29.0	102.0	3.0	1080	0		distinct	distinct
+sim-192	jd	差异化营养厨房12	特色营养套餐012	差异化套餐4	487	40.6	407	31.0	11.0	46.0	5.5	1153	3		distinct	distinct
+sim-193	meituan	差异化营养厨房13	特色营养套餐013	差异化套餐5	504	47.0	571	31.0	15.0	78.0	10.5	1226	6		distinct	distinct
+sim-194	eleme	差异化营养厨房14	特色营养套餐014	差异化套餐6	521	54.3	569	31.0	29.0	46.0	4.0	1299	9		distinct	distinct
+sim-195	jd	差异化营养厨房15	特色营养套餐015	差异化套餐7	538	61.6	544	40.0	8.0	78.0	7.5	1372	12		distinct	distinct
+sim-196	meituan	差异化营养厨房16	特色营养套餐016	差异化套餐8	555	68.0	479	40.0	15.0	46.0	3.0	1445	0		distinct	distinct
+sim-197	eleme	差异化营养厨房17	特色营养套餐017	差异化套餐1	572	20.3	661	40.0	21.0	78.0	5.5	1518	3		distinct	distinct
+sim-198	jd	差异化营养厨房18	特色营养套餐018	差异化套餐2	589	27.6	272	15.0	8.0	35.0	10.5	1591	6		distinct	distinct
+sim-199	meituan	差异化营养厨房19	特色营养套餐019	差异化套餐3	606	34.0	471	15.0	11.0	78.0	4.0	1664	9		distinct	distinct
+sim-200	eleme	差异化营养厨房20	特色营养套餐020	差异化套餐4	623	41.3	389	15.0	21.0	35.0	7.5	1737	12		distinct	distinct
+sim-201	jd	差异化营养厨房21	特色营养套餐021	差异化套餐5	640	48.6	633	15.0	29.0	78.0	3.0	1810	0		distinct	distinct
+sim-202	meituan	差异化营养厨房22	特色营养套餐022	差异化套餐6	307	55.0	315	19.0	11.0	35.0	5.5	383	3		distinct	distinct
+sim-203	eleme	差异化营养厨房23	特色营养套餐023	差异化套餐7	324	62.3	451	19.0	15.0	60.0	10.5	456	6		distinct	distinct
+sim-204	jd	差异化营养厨房24	特色营养套餐024	差异化套餐8	341	69.6	477	19.0	29.0	35.0	4.0	529	9		distinct	distinct
+sim-205	meituan	差异化营养厨房25	特色营养套餐025	差异化套餐1	358	21.0	408	24.0	8.0	60.0	7.5	602	12		distinct	distinct
+sim-206	eleme	差异化营养厨房26	特色营养套餐026	差异化套餐2	375	28.3	371	24.0	15.0	35.0	3.0	675	0		distinct	distinct
+sim-207	jd	差异化营养厨房27	特色营养套餐027	差异化套餐3	392	35.6	525	24.0	21.0	60.0	5.5	748	3		distinct	distinct
+sim-208	meituan	差异化营养厨房28	特色营养套餐028	差异化套餐4	409	42.0	765	24.0	29.0	102.0	10.5	821	6		distinct	distinct
+sim-209	eleme	差异化营养厨房29	特色营养套餐029	差异化套餐5	426	49.3	463	31.0	11.0	60.0	4.0	894	9		distinct	distinct
+sim-210	jd	差异化营养厨房30	特色营养套餐030	差异化套餐6	443	56.6	667	31.0	15.0	102.0	7.5	967	12		distinct	distinct
+sim-211	meituan	差异化营养厨房31	特色营养套餐031	差异化套餐7	460	63.0	625	31.0	29.0	60.0	3.0	1040	0		distinct	distinct
+sim-212	eleme	差异化营养厨房32	特色营养套餐032	差异化套餐8	477	70.3	640	40.0	8.0	102.0	5.5	1113	3		distinct	distinct
+sim-213	jd	差异化营养厨房33	特色营养套餐033	差异化套餐1	494	22.6	479	40.0	15.0	46.0	10.5	1186	6		distinct	distinct
+sim-214	meituan	差异化营养厨房34	特色营养套餐034	差异化套餐2	511	29.0	757	40.0	21.0	102.0	4.0	1259	9		distinct	distinct
+sim-215	eleme	差异化营养厨房35	特色营养套餐035	差异化套餐3	528	36.3	316	15.0	8.0	46.0	7.5	1332	12		distinct	distinct
+sim-216	jd	差异化营养厨房36	特色营养套餐036	差异化套餐4	545	43.6	567	15.0	11.0	102.0	3.0	1405	0		distinct	distinct
+sim-217	meituan	差异化营养厨房37	特色营养套餐037	差异化套餐5	562	50.0	433	15.0	21.0	46.0	5.5	1478	3		distinct	distinct
+sim-218	eleme	差异化营养厨房38	特色营养套餐038	差异化套餐6	579	57.3	633	15.0	29.0	78.0	10.5	1551	6		distinct	distinct
+sim-219	jd	差异化营养厨房39	特色营养套餐039	差异化套餐7	596	64.6	359	19.0	11.0	46.0	4.0	1624	9		distinct	distinct
+sim-220	meituan	差异化营养厨房40	特色营养套餐040	差异化套餐8	613	71.0	523	19.0	15.0	78.0	7.5	1697	12		distinct	distinct
+sim-221	eleme	差异化营养厨房01	特色营养套餐041	差异化套餐1	630	23.3	521	19.0	29.0	46.0	3.0	1770	0		distinct	distinct
+sim-222	jd	差异化营养厨房02	特色营养套餐042	差异化套餐2	647	30.6	480	24.0	8.0	78.0	5.5	1843	3		distinct	distinct
+sim-223	meituan	差异化营养厨房03	特色营养套餐043	差异化套餐3	314	37.0	371	24.0	15.0	35.0	10.5	416	6		distinct	distinct
+sim-224	eleme	差异化营养厨房04	特色营养套餐044	差异化套餐4	331	44.3	597	24.0	21.0	78.0	4.0	489	9		distinct	distinct
+sim-225	jd	差异化营养厨房05	特色营养套餐045	差异化套餐5	348	51.6	336	31.0	8.0	35.0	7.5	562	12		distinct	distinct
+sim-226	meituan	差异化营养厨房06	特色营养套餐046	差异化套餐6	365	58.0	535	31.0	11.0	78.0	3.0	635	0		distinct	distinct
+sim-227	eleme	差异化营养厨房07	特色营养套餐047	差异化套餐7	382	65.3	453	31.0	21.0	35.0	5.5	708	3		distinct	distinct
+sim-228	jd	差异化营养厨房08	特色营养套餐048	差异化套餐8	399	72.6	625	31.0	29.0	60.0	10.5	781	6		distinct	distinct
+sim-229	meituan	差异化营养厨房09	特色营养套餐049	差异化套餐1	416	24.0	399	40.0	11.0	35.0	4.0	854	9		distinct	distinct
+sim-230	eleme	差异化营养厨房10	特色营养套餐050	差异化套餐2	433	31.3	535	40.0	15.0	60.0	7.5	927	12		distinct	distinct
+sim-231	jd	差异化营养厨房11	特色营养套餐051	差异化套餐3	450	38.6	561	40.0	29.0	35.0	3.0	1000	0		distinct	distinct
+sim-232	meituan	差异化营养厨房12	特色营养套餐052	差异化套餐4	467	45.0	372	15.0	8.0	60.0	5.5	1073	3		distinct	distinct
+sim-233	eleme	差异化营养厨房13	特色营养套餐053	差异化套餐5	484	52.3	567	15.0	11.0	102.0	10.5	1146	6		distinct	distinct
+sim-234	jd	差异化营养厨房14	特色营养套餐054	差异化套餐6	501	59.6	489	15.0	21.0	60.0	4.0	1219	9		distinct	distinct
+sim-235	meituan	差异化营养厨房15	特色营养套餐055	差异化套餐7	518	66.0	729	15.0	29.0	102.0	7.5	1292	12		distinct	distinct
+sim-236	eleme	差异化营养厨房16	特色营养套餐056	差异化套餐8	535	18.3	415	19.0	11.0	60.0	3.0	1365	0		distinct	distinct
+sim-237	jd	差异化营养厨房17	特色营养套餐057	差异化套餐1	552	25.6	619	19.0	15.0	102.0	5.5	1438	3		distinct	distinct
+sim-238	meituan	差异化营养厨房18	特色营养套餐058	差异化套餐2	569	32.0	521	19.0	29.0	46.0	10.5	1511	6		distinct	distinct
+sim-239	eleme	差异化营养厨房19	特色营养套餐059	差异化套餐3	586	39.3	576	24.0	8.0	102.0	4.0	1584	9		distinct	distinct
+sim-240	jd	差异化营养厨房20	特色营养套餐060	差异化套餐4	603	46.6	415	24.0	15.0	46.0	7.5	1657	12		distinct	distinct
+sim-241	meituan	差异化营养厨房21	特色营养套餐061	差异化套餐5	620	53.0	693	24.0	21.0	102.0	3.0	1730	0		distinct	distinct
+sim-242	eleme	差异化营养厨房22	特色营养套餐062	差异化套餐6	637	60.3	380	31.0	8.0	46.0	5.5	1803	3		distinct	distinct
+sim-243	jd	差异化营养厨房23	特色营养套餐063	差异化套餐7	304	67.6	535	31.0	11.0	78.0	10.5	376	6		distinct	distinct
+sim-244	meituan	差异化营养厨房24	特色营养套餐064	差异化套餐8	321	19.0	497	31.0	21.0	46.0	4.0	449	9		distinct	distinct
+sim-245	eleme	差异化营养厨房25	特色营养套餐065	差异化套餐1	338	26.3	697	31.0	29.0	78.0	7.5	522	12		distinct	distinct
+sim-246	jd	差异化营养厨房26	特色营养套餐066	差异化套餐2	355	33.6	443	40.0	11.0	46.0	3.0	595	0		distinct	distinct
+sim-247	meituan	差异化营养厨房27	特色营养套餐067	差异化套餐3	372	40.0	607	40.0	15.0	78.0	5.5	668	3		distinct	distinct
+sim-248	eleme	差异化营养厨房28	特色营养套餐068	差异化套餐4	389	47.3	561	40.0	29.0	35.0	10.5	741	6		distinct	distinct
+sim-249	jd	差异化营养厨房29	特色营养套餐069	差异化套餐5	406	54.6	444	15.0	8.0	78.0	4.0	814	9		distinct	distinct
+sim-250	meituan	差异化营养厨房30	特色营养套餐070	差异化套餐6	423	61.0	335	15.0	15.0	35.0	7.5	887	12		distinct	distinct
+sim-251	eleme	差异化营养厨房31	特色营养套餐071	差异化套餐7	440	68.3	561	15.0	21.0	78.0	3.0	960	0		distinct	distinct
+sim-252	jd	差异化营养厨房32	特色营养套餐072	差异化套餐8	457	20.6	288	19.0	8.0	35.0	5.5	1033	3		distinct	distinct
+sim-253	meituan	差异化营养厨房33	特色营养套餐073	差异化套餐1	474	27.0	415	19.0	11.0	60.0	10.5	1106	6		distinct	distinct
+sim-254	eleme	差异化营养厨房34	特色营养套餐074	差异化套餐2	491	34.3	405	19.0	21.0	35.0	4.0	1179	9		distinct	distinct
+sim-255	jd	差异化营养厨房35	特色营养套餐075	差异化套餐3	508	41.6	577	19.0	29.0	60.0	7.5	1252	12		distinct	distinct
+sim-256	meituan	差异化营养厨房36	特色营养套餐076	差异化套餐4	525	48.0	335	24.0	11.0	35.0	3.0	1325	0		distinct	distinct
+sim-257	eleme	差异化营养厨房37	特色营养套餐077	差异化套餐5	542	55.3	471	24.0	15.0	60.0	5.5	1398	3		distinct	distinct
+sim-258	jd	差异化营养厨房38	特色营养套餐078	差异化套餐6	559	62.6	693	24.0	21.0	102.0	10.5	1471	6		distinct	distinct
+sim-259	meituan	差异化营养厨房39	特色营养套餐079	差异化套餐7	576	69.0	436	31.0	8.0	60.0	4.0	1544	9		distinct	distinct
+sim-260	eleme	差异化营养厨房40	特色营养套餐080	差异化套餐8	593	21.3	631	31.0	11.0	102.0	7.5	1617	12		distinct	distinct
+sim-261	jd	差异化营养厨房01	特色营养套餐081	差异化套餐1	610	28.6	553	31.0	21.0	60.0	3.0	1690	0		distinct	distinct
+sim-262	meituan	差异化营养厨房02	特色营养套餐082	差异化套餐2	627	35.0	793	31.0	29.0	102.0	5.5	1763	3		distinct	distinct
+sim-263	eleme	差异化营养厨房03	特色营养套餐083	差异化套餐3	644	42.3	443	40.0	11.0	46.0	10.5	1836	6		distinct	distinct
+sim-264	jd	差异化营养厨房04	特色营养套餐084	差异化套餐4	311	49.6	703	40.0	15.0	102.0	4.0	409	9		distinct	distinct
+sim-265	meituan	差异化营养厨房05	特色营养套餐085	差异化套餐5	328	56.0	605	40.0	29.0	46.0	7.5	482	12		distinct	distinct
+sim-266	eleme	差异化营养厨房06	特色营养套餐086	差异化套餐6	345	63.3	540	15.0	8.0	102.0	3.0	555	0		distinct	distinct
+sim-267	jd	差异化营养厨房07	特色营养套餐087	差异化套餐7	362	70.6	379	15.0	15.0	46.0	5.5	628	3		distinct	distinct
+sim-268	meituan	差异化营养厨房08	特色营养套餐088	差异化套餐8	379	22.0	561	15.0	21.0	78.0	10.5	701	6		distinct	distinct
+sim-269	eleme	差异化营养厨房09	特色营养套餐089	差异化套餐1	396	29.3	332	19.0	8.0	46.0	4.0	774	9		distinct	distinct
+sim-270	jd	差异化营养厨房10	特色营养套餐090	差异化套餐2	413	36.6	487	19.0	11.0	78.0	7.5	847	12		distinct	distinct
+sim-271	meituan	差异化营养厨房11	特色营养套餐091	差异化套餐3	430	43.0	449	19.0	21.0	46.0	3.0	920	0		distinct	distinct
+sim-272	eleme	差异化营养厨房12	特色营养套餐092	差异化套餐4	447	50.3	649	19.0	29.0	78.0	5.5	993	3		distinct	distinct
+sim-273	jd	差异化营养厨房13	特色营养套餐093	差异化套餐5	464	57.6	335	24.0	11.0	35.0	10.5	1066	6		distinct	distinct
+sim-274	meituan	差异化营养厨房14	特色营养套餐094	差异化套餐6	481	64.0	543	24.0	15.0	78.0	4.0	1139	9		distinct	distinct
+sim-275	eleme	差异化营养厨房15	特色营养套餐095	差异化套餐7	498	71.3	497	24.0	29.0	35.0	7.5	1212	12		distinct	distinct
+sim-276	jd	差异化营养厨房16	特色营养套餐096	差异化套餐8	515	23.6	508	31.0	8.0	78.0	3.0	1285	0		distinct	distinct
+sim-277	meituan	差异化营养厨房17	特色营养套餐097	差异化套餐1	532	30.0	399	31.0	15.0	35.0	5.5	1358	3		distinct	distinct
+sim-278	eleme	差异化营养厨房18	特色营养套餐098	差异化套餐2	549	37.3	553	31.0	21.0	60.0	10.5	1431	6		distinct	distinct
+sim-279	jd	差异化营养厨房19	特色营养套餐099	差异化套餐3	566	44.6	372	40.0	8.0	35.0	4.0	1504	9		distinct	distinct
+sim-280	meituan	差异化营养厨房20	特色营养套餐100	差异化套餐4	583	51.0	499	40.0	11.0	60.0	7.5	1577	12		distinct	distinct
+sim-281	eleme	差异化营养厨房21	特色营养套餐101	差异化套餐5	600	58.3	489	40.0	21.0	35.0	3.0	1650	0		distinct	distinct
+sim-282	jd	差异化营养厨房22	特色营养套餐102	差异化套餐6	617	65.6	661	40.0	29.0	60.0	5.5	1723	3		distinct	distinct
+sim-283	meituan	差异化营养厨房23	特色营养套餐103	差异化套餐7	634	72.0	540	15.0	8.0	102.0	10.5	1796	6		distinct	distinct
+sim-284	eleme	差异化营养厨房24	特色营养套餐104	差异化套餐8	301	24.3	435	15.0	15.0	60.0	4.0	369	9		distinct	distinct
+sim-285	jd	差异化营养厨房25	特色营养套餐105	差异化套餐1	318	31.6	657	15.0	21.0	102.0	7.5	442	12		distinct	distinct
+sim-286	meituan	差异化营养厨房26	特色营养套餐106	差异化套餐2	335	38.0	388	19.0	8.0	60.0	3.0	515	0		distinct	distinct
+sim-287	eleme	差异化营养厨房27	特色营养套餐107	差异化套餐3	352	45.3	583	19.0	11.0	102.0	5.5	588	3		distinct	distinct
+sim-288	jd	差异化营养厨房28	特色营养套餐108	差异化套餐4	369	52.6	449	19.0	21.0	46.0	10.5	661	6		distinct	distinct
+sim-289	meituan	差异化营养厨房29	特色营养套餐109	差异化套餐5	386	59.0	745	19.0	29.0	102.0	4.0	734	9		distinct	distinct
+sim-290	eleme	差异化营养厨房30	特色营养套餐110	差异化套餐6	403	66.3	379	24.0	11.0	46.0	7.5	807	12		distinct	distinct
+sim-291	jd	差异化营养厨房31	特色营养套餐111	差异化套餐7	420	18.6	639	24.0	15.0	102.0	3.0	880	0		distinct	distinct
+sim-292	meituan	差异化营养厨房32	特色营养套餐112	差异化套餐8	437	25.0	541	24.0	29.0	46.0	5.5	953	3		distinct	distinct
+sim-293	eleme	差异化营养厨房33	特色营养套餐113	差异化套餐1	454	32.3	508	31.0	8.0	78.0	10.5	1026	6		distinct	distinct
+sim-294	jd	差异化营养厨房34	特色营养套餐114	差异化套餐2	471	39.6	443	31.0	15.0	46.0	4.0	1099	9		distinct	distinct
+sim-295	meituan	差异化营养厨房35	特色营养套餐115	差异化套餐3	488	46.0	625	31.0	21.0	78.0	7.5	1172	12		distinct	distinct
+sim-296	eleme	差异化营养厨房36	特色营养套餐116	差异化套餐4	505	53.3	416	40.0	8.0	46.0	3.0	1245	0		distinct	distinct
+sim-297	jd	差异化营养厨房37	特色营养套餐117	差异化套餐5	522	60.6	571	40.0	11.0	78.0	5.5	1318	3		distinct	distinct
+sim-298	meituan	差异化营养厨房38	特色营养套餐118	差异化套餐6	539	67.0	489	40.0	21.0	35.0	10.5	1391	6		distinct	distinct
+sim-299	eleme	差异化营养厨房39	特色营养套餐119	差异化套餐7	556	19.3	733	40.0	29.0	78.0	4.0	1464	9		distinct	distinct
+sim-300	jd	差异化营养厨房40	特色营养套餐120	差异化套餐8	573	26.6	299	15.0	11.0	35.0	7.5	1537	12		distinct	distinct
+sim-301	meituan	差异化营养厨房01	特色营养套餐121	差异化套餐1	590	33.0	507	15.0	15.0	78.0	3.0	1610	0		distinct	distinct
+sim-302	eleme	差异化营养厨房02	特色营养套餐122	差异化套餐2	607	40.3	461	15.0	29.0	35.0	5.5	1683	3		distinct	distinct
+sim-303	jd	差异化营养厨房03	特色营养套餐123	差异化套餐3	624	47.6	388	19.0	8.0	60.0	10.5	1756	6		distinct	distinct
+sim-304	meituan	差异化营养厨房04	特色营养套餐124	差异化套餐4	641	54.0	351	19.0	15.0	35.0	4.0	1829	9		distinct	distinct
+sim-305	eleme	差异化营养厨房05	特色营养套餐125	差异化套餐5	308	61.3	505	19.0	21.0	60.0	7.5	402	12		distinct	distinct
+sim-306	jd	差异化营养厨房06	特色营养套餐126	差异化套餐6	325	68.6	308	24.0	8.0	35.0	3.0	475	0		distinct	distinct
+sim-307	meituan	差异化营养厨房07	特色营养套餐127	差异化套餐7	342	20.0	435	24.0	11.0	60.0	5.5	548	3		distinct	distinct
+sim-308	eleme	差异化营养厨房08	特色营养套餐128	差异化套餐8	359	27.3	639	24.0	15.0	102.0	10.5	621	6		distinct	distinct
+sim-309	jd	差异化营养厨房09	特色营养套餐129	差异化套餐1	376	34.6	597	24.0	29.0	60.0	4.0	694	9		distinct	distinct
+sim-310	meituan	差异化营养厨房10	特色营养套餐130	差异化套餐2	393	41.0	604	31.0	8.0	102.0	7.5	767	12		distinct	distinct
+sim-311	eleme	差异化营养厨房11	特色营养套餐131	差异化套餐3	410	48.3	499	31.0	15.0	60.0	3.0	840	0		distinct	distinct
+sim-312	jd	差异化营养厨房12	特色营养套餐132	差异化套餐4	427	55.6	721	31.0	21.0	102.0	5.5	913	3		distinct	distinct
+sim-313	meituan	差异化营养厨房13	特色营养套餐133	差异化套餐5	444	62.0	416	40.0	8.0	46.0	10.5	986	6		distinct	distinct
+sim-314	eleme	差异化营养厨房14	特色营养套餐134	差异化套餐6	461	69.3	667	40.0	11.0	102.0	4.0	1059	9		distinct	distinct
+sim-315	jd	差异化营养厨房15	特色营养套餐135	差异化套餐7	478	21.6	533	40.0	21.0	46.0	7.5	1132	12		distinct	distinct
+sim-316	meituan	差异化营养厨房16	特色营养套餐136	差异化套餐8	495	28.0	829	40.0	29.0	102.0	3.0	1205	0		distinct	distinct
+sim-317	eleme	差异化营养厨房17	特色营养套餐137	差异化套餐1	512	35.3	343	15.0	11.0	46.0	5.5	1278	3		distinct	distinct
+sim-318	jd	差异化营养厨房18	特色营养套餐138	差异化套餐2	529	42.6	507	15.0	15.0	78.0	10.5	1351	6		distinct	distinct
+sim-319	meituan	差异化营养厨房19	特色营养套餐139	差异化套餐3	546	49.0	505	15.0	29.0	46.0	4.0	1424	9		distinct	distinct
+sim-320	eleme	差异化营养厨房20	特色营养套餐140	差异化套餐4	563	56.3	460	19.0	8.0	78.0	7.5	1497	12		distinct	distinct
+sim-321	jd	差异化营养厨房21	特色营养套餐141	差异化套餐5	580	63.6	395	19.0	15.0	46.0	3.0	1570	0		distinct	distinct
+sim-322	meituan	差异化营养厨房22	特色营养套餐142	差异化套餐6	597	70.0	577	19.0	21.0	78.0	5.5	1643	3		distinct	distinct
+sim-323	eleme	差异化营养厨房23	特色营养套餐143	差异化套餐7	614	22.3	308	24.0	8.0	35.0	10.5	1716	6		distinct	distinct
+sim-324	jd	差异化营养厨房24	特色营养套餐144	差异化套餐8	631	29.6	507	24.0	11.0	78.0	4.0	1789	9		distinct	distinct
+sim-325	meituan	差异化营养厨房25	特色营养套餐145	差异化套餐1	648	36.0	425	24.0	21.0	35.0	7.5	362	12		distinct	distinct
+sim-326	eleme	差异化营养厨房26	特色营养套餐146	差异化套餐2	315	43.3	669	24.0	29.0	78.0	3.0	435	0		distinct	distinct
+sim-327	jd	差异化营养厨房27	特色营养套餐147	差异化套餐3	332	50.6	363	31.0	11.0	35.0	5.5	508	3		distinct	distinct
+sim-328	meituan	差异化营养厨房28	特色营养套餐148	差异化套餐4	349	57.0	499	31.0	15.0	60.0	10.5	581	6		distinct	distinct
+sim-329	eleme	差异化营养厨房29	特色营养套餐149	差异化套餐5	366	64.3	525	31.0	29.0	35.0	4.0	654	9		distinct	distinct
+sim-330	jd	差异化营养厨房30	特色营养套餐150	差异化套餐6	383	71.6	472	40.0	8.0	60.0	7.5	727	12		distinct	distinct
+sim-331	meituan	差异化营养厨房31	特色营养套餐151	差异化套餐7	400	23.0	435	40.0	15.0	35.0	3.0	800	0		distinct	distinct
+sim-332	eleme	差异化营养厨房32	特色营养套餐152	差异化套餐8	417	30.3	589	40.0	21.0	60.0	5.5	873	3		distinct	distinct
+sim-333	jd	差异化营养厨房33	特色营养套餐153	差异化套餐1	434	37.6	829	40.0	29.0	102.0	10.5	946	6		distinct	distinct
+sim-334	meituan	差异化营养厨房34	特色营养套餐154	差异化套餐2	451	44.0	399	15.0	11.0	60.0	4.0	1019	9		distinct	distinct
+sim-335	eleme	差异化营养厨房35	特色营养套餐155	差异化套餐3	468	51.3	603	15.0	15.0	102.0	7.5	1092	12		distinct	distinct
+sim-336	jd	差异化营养厨房36	特色营养套餐156	差异化套餐4	485	58.6	561	15.0	29.0	60.0	3.0	1165	0		distinct	distinct
+sim-337	meituan	差异化营养厨房37	特色营养套餐157	差异化套餐5	502	65.0	556	19.0	8.0	102.0	5.5	1238	3		distinct	distinct
+sim-338	eleme	差异化营养厨房38	特色营养套餐158	差异化套餐6	519	72.3	395	19.0	15.0	46.0	10.5	1311	6		distinct	distinct
+sim-339	jd	差异化营养厨房39	特色营养套餐159	差异化套餐7	536	24.6	673	19.0	21.0	102.0	4.0	1384	9		distinct	distinct
+sim-340	meituan	差异化营养厨房40	特色营养套餐160	差异化套餐8	553	31.0	352	24.0	8.0	46.0	7.5	1457	12		distinct	distinct
+sim-341	eleme	差异化营养厨房01	特色营养套餐161	差异化套餐1	570	38.3	603	24.0	11.0	102.0	3.0	1530	0		distinct	distinct
+sim-342	jd	差异化营养厨房02	特色营养套餐162	差异化套餐2	587	45.6	469	24.0	21.0	46.0	5.5	1603	3		distinct	distinct
+sim-343	meituan	差异化营养厨房03	特色营养套餐163	差异化套餐3	604	52.0	669	24.0	29.0	78.0	10.5	1676	6		distinct	distinct
+sim-344	eleme	差异化营养厨房04	特色营养套餐164	差异化套餐4	621	59.3	407	31.0	11.0	46.0	4.0	1749	9		distinct	distinct
+sim-345	jd	差异化营养厨房05	特色营养套餐165	差异化套餐5	638	66.6	571	31.0	15.0	78.0	7.5	1822	12		distinct	distinct
+sim-346	meituan	差异化营养厨房06	特色营养套餐166	差异化套餐6	305	18.0	569	31.0	29.0	46.0	3.0	395	0		distinct	distinct
+sim-347	eleme	差异化营养厨房07	特色营养套餐167	差异化套餐7	322	25.3	544	40.0	8.0	78.0	5.5	468	3		distinct	distinct
+sim-348	jd	差异化营养厨房08	特色营养套餐168	差异化套餐8	339	32.6	435	40.0	15.0	35.0	10.5	541	6		distinct	distinct
+sim-349	meituan	差异化营养厨房09	特色营养套餐169	差异化套餐1	356	39.0	661	40.0	21.0	78.0	4.0	614	9		distinct	distinct
+sim-350	eleme	差异化营养厨房10	特色营养套餐170	差异化套餐2	373	46.3	272	15.0	8.0	35.0	7.5	687	12		distinct	distinct
+sim-351	jd	差异化营养厨房11	特色营养套餐171	差异化套餐3	390	53.6	471	15.0	11.0	78.0	3.0	760	0		distinct	distinct
+sim-352	meituan	差异化营养厨房12	特色营养套餐172	差异化套餐4	407	60.0	389	15.0	21.0	35.0	5.5	833	3		distinct	distinct
+sim-353	eleme	差异化营养厨房13	特色营养套餐173	差异化套餐5	424	67.3	561	15.0	29.0	60.0	10.5	906	6		distinct	distinct
+sim-354	jd	差异化营养厨房14	特色营养套餐174	差异化套餐6	441	19.6	315	19.0	11.0	35.0	4.0	979	9		distinct	distinct
+sim-355	meituan	差异化营养厨房15	特色营养套餐175	差异化套餐7	458	26.0	451	19.0	15.0	60.0	7.5	1052	12		distinct	distinct
+sim-356	eleme	差异化营养厨房16	特色营养套餐176	差异化套餐8	475	33.3	477	19.0	29.0	35.0	3.0	1125	0		distinct	distinct
+sim-357	jd	差异化营养厨房17	特色营养套餐177	差异化套餐1	492	40.6	408	24.0	8.0	60.0	5.5	1198	3		distinct	distinct
+sim-358	meituan	差异化营养厨房18	特色营养套餐178	差异化套餐2	509	47.0	603	24.0	11.0	102.0	10.5	1271	6		distinct	distinct
+sim-359	eleme	差异化营养厨房19	特色营养套餐179	差异化套餐3	526	54.3	525	24.0	21.0	60.0	4.0	1344	9		distinct	distinct
+sim-360	jd	差异化营养厨房20	特色营养套餐180	差异化套餐4	543	61.6	765	24.0	29.0	102.0	7.5	1417	12		distinct	distinct
+sim-361	meituan	差异化营养厨房21	特色营养套餐181	差异化套餐5	560	68.0	463	31.0	11.0	60.0	3.0	1490	0		distinct	distinct
+sim-362	eleme	差异化营养厨房22	特色营养套餐182	差异化套餐6	577	20.3	667	31.0	15.0	102.0	5.5	1563	3		distinct	distinct
+sim-363	jd	差异化营养厨房23	特色营养套餐183	差异化套餐7	594	27.6	569	31.0	29.0	46.0	10.5	1636	6		distinct	distinct
+sim-364	meituan	差异化营养厨房24	特色营养套餐184	差异化套餐8	611	34.0	640	40.0	8.0	102.0	4.0	1709	9		distinct	distinct
+sim-365	eleme	差异化营养厨房25	特色营养套餐185	差异化套餐1	628	41.3	479	40.0	15.0	46.0	7.5	1782	12		distinct	distinct
+sim-366	jd	差异化营养厨房26	特色营养套餐186	差异化套餐2	645	48.6	757	40.0	21.0	102.0	3.0	355	0		distinct	distinct
+sim-367	meituan	差异化营养厨房27	特色营养套餐187	差异化套餐3	312	55.0	316	15.0	8.0	46.0	5.5	428	3		distinct	distinct
+sim-368	eleme	差异化营养厨房28	特色营养套餐188	差异化套餐4	329	62.3	471	15.0	11.0	78.0	10.5	501	6		distinct	distinct
+sim-369	jd	差异化营养厨房29	特色营养套餐189	差异化套餐5	346	69.6	433	15.0	21.0	46.0	4.0	574	9		distinct	distinct
+sim-370	meituan	差异化营养厨房30	特色营养套餐190	差异化套餐6	363	21.0	633	15.0	29.0	78.0	7.5	647	12		distinct	distinct
+sim-371	eleme	差异化营养厨房31	特色营养套餐191	差异化套餐7	380	28.3	359	19.0	11.0	46.0	3.0	720	0		distinct	distinct
+sim-372	jd	差异化营养厨房32	特色营养套餐192	差异化套餐8	397	35.6	523	19.0	15.0	78.0	5.5	793	3		distinct	distinct
+sim-373	meituan	差异化营养厨房33	特色营养套餐193	差异化套餐1	414	42.0	477	19.0	29.0	35.0	10.5	866	6		distinct	distinct
+sim-374	eleme	差异化营养厨房34	特色营养套餐194	差异化套餐2	431	49.3	480	24.0	8.0	78.0	4.0	939	9		distinct	distinct
+sim-375	jd	差异化营养厨房35	特色营养套餐195	差异化套餐3	448	56.6	371	24.0	15.0	35.0	7.5	1012	12		distinct	distinct
+sim-376	meituan	差异化营养厨房36	特色营养套餐196	差异化套餐4	465	63.0	597	24.0	21.0	78.0	3.0	1085	0		distinct	distinct
+sim-377	eleme	差异化营养厨房37	特色营养套餐197	差异化套餐5	482	70.3	336	31.0	8.0	35.0	5.5	1158	3		distinct	distinct
+sim-378	jd	差异化营养厨房38	特色营养套餐198	差异化套餐6	499	22.6	463	31.0	11.0	60.0	10.5	1231	6		distinct	distinct
+sim-379	meituan	差异化营养厨房39	特色营养套餐199	差异化套餐7	516	29.0	453	31.0	21.0	35.0	4.0	1304	9		distinct	distinct
+sim-380	eleme	差异化营养厨房40	特色营养套餐200	差异化套餐8	533	36.3	625	31.0	29.0	60.0	7.5	1377	12		distinct	distinct
+sim-381	jd	差异化营养厨房01	特色营养套餐201	差异化套餐1	550	43.6	399	40.0	11.0	35.0	3.0	1450	0		distinct	distinct
+sim-382	meituan	差异化营养厨房02	特色营养套餐202	差异化套餐2	567	50.0	535	40.0	15.0	60.0	5.5	1523	3		distinct	distinct
+sim-383	eleme	差异化营养厨房03	特色营养套餐203	差异化套餐3	584	57.3	757	40.0	21.0	102.0	10.5	1596	6		distinct	distinct
+sim-384	jd	差异化营养厨房04	特色营养套餐204	差异化套餐4	601	64.6	372	15.0	8.0	60.0	4.0	1669	9		distinct	distinct
+sim-385	meituan	差异化营养厨房05	特色营养套餐205	差异化套餐5	618	71.0	567	15.0	11.0	102.0	7.5	1742	12		distinct	distinct
+sim-386	eleme	差异化营养厨房06	特色营养套餐206	差异化套餐6	635	23.3	489	15.0	21.0	60.0	3.0	1815	0		distinct	distinct
+sim-387	jd	差异化营养厨房07	特色营养套餐207	差异化套餐7	302	30.6	729	15.0	29.0	102.0	5.5	388	3		distinct	distinct
+sim-388	meituan	差异化营养厨房08	特色营养套餐208	差异化套餐8	319	37.0	359	19.0	11.0	46.0	10.5	461	6		distinct	distinct
+sim-389	eleme	差异化营养厨房09	特色营养套餐209	差异化套餐1	336	44.3	619	19.0	15.0	102.0	4.0	534	9		distinct	distinct
+sim-390	jd	差异化营养厨房10	特色营养套餐210	差异化套餐2	353	51.6	521	19.0	29.0	46.0	7.5	607	12		distinct	distinct
+sim-391	meituan	差异化营养厨房11	特色营养套餐211	差异化套餐3	370	58.0	576	24.0	8.0	102.0	3.0	680	0		distinct	distinct
+sim-392	eleme	差异化营养厨房12	特色营养套餐212	差异化套餐4	387	65.3	415	24.0	15.0	46.0	5.5	753	3		distinct	distinct
+sim-393	jd	差异化营养厨房13	特色营养套餐213	差异化套餐5	404	72.6	597	24.0	21.0	78.0	10.5	826	6		distinct	distinct
+sim-394	meituan	差异化营养厨房14	特色营养套餐214	差异化套餐6	421	24.0	380	31.0	8.0	46.0	4.0	899	9		distinct	distinct
+sim-395	eleme	差异化营养厨房15	特色营养套餐215	差异化套餐7	438	31.3	535	31.0	11.0	78.0	7.5	972	12		distinct	distinct
+sim-396	jd	差异化营养厨房16	特色营养套餐216	差异化套餐8	455	38.6	497	31.0	21.0	46.0	3.0	1045	0		distinct	distinct
+sim-397	meituan	差异化营养厨房17	特色营养套餐217	差异化套餐1	472	45.0	697	31.0	29.0	78.0	5.5	1118	3		distinct	distinct
+sim-398	eleme	差异化营养厨房18	特色营养套餐218	差异化套餐2	489	52.3	399	40.0	11.0	35.0	10.5	1191	6		distinct	distinct
+sim-399	jd	差异化营养厨房19	特色营养套餐219	差异化套餐3	506	59.6	607	40.0	15.0	78.0	4.0	1264	9		distinct	distinct
+sim-400	meituan	差异化营养厨房20	特色营养套餐220	差异化套餐4	523	66.0	561	40.0	29.0	35.0	7.5	1337	12		distinct	distinct
+sim-401	eleme	差异化营养厨房21	特色营养套餐221	差异化套餐5	540	18.3	444	15.0	8.0	78.0	3.0	1410	0		distinct	distinct
+sim-402	jd	差异化营养厨房22	特色营养套餐222	差异化套餐6	557	25.6	335	15.0	15.0	35.0	5.5	1483	3		distinct	distinct
+sim-403	meituan	差异化营养厨房23	特色营养套餐223	差异化套餐7	574	32.0	489	15.0	21.0	60.0	10.5	1556	6		distinct	distinct
+sim-404	eleme	差异化营养厨房24	特色营养套餐224	差异化套餐8	591	39.3	288	19.0	8.0	35.0	4.0	1629	9		distinct	distinct
+sim-405	jd	差异化营养厨房25	特色营养套餐225	差异化套餐1	608	46.6	415	19.0	11.0	60.0	7.5	1702	12		distinct	distinct
+sim-406	meituan	差异化营养厨房26	特色营养套餐226	差异化套餐2	625	53.0	405	19.0	21.0	35.0	3.0	1775	0		distinct	distinct
+sim-407	eleme	差异化营养厨房27	特色营养套餐227	差异化套餐3	642	60.3	577	19.0	29.0	60.0	5.5	1848	3		distinct	distinct
+sim-408	jd	差异化营养厨房28	特色营养套餐228	差异化套餐4	309	67.6	576	24.0	8.0	102.0	10.5	421	6		distinct	distinct
+sim-409	meituan	差异化营养厨房29	特色营养套餐229	差异化套餐5	326	19.0	471	24.0	15.0	60.0	4.0	494	9		distinct	distinct
+sim-410	eleme	差异化营养厨房30	特色营养套餐230	差异化套餐6	343	26.3	693	24.0	21.0	102.0	7.5	567	12		distinct	distinct
+sim-411	jd	差异化营养厨房31	特色营养套餐231	差异化套餐7	360	33.6	436	31.0	8.0	60.0	3.0	640	0		distinct	distinct
+sim-412	meituan	差异化营养厨房32	特色营养套餐232	差异化套餐8	377	40.0	631	31.0	11.0	102.0	5.5	713	3		distinct	distinct
+sim-413	eleme	差异化营养厨房33	特色营养套餐233	差异化套餐1	394	47.3	497	31.0	21.0	46.0	10.5	786	6		distinct	distinct
+sim-414	jd	差异化营养厨房34	特色营养套餐234	差异化套餐2	411	54.6	793	31.0	29.0	102.0	4.0	859	9		distinct	distinct
+sim-415	meituan	差异化营养厨房35	特色营养套餐235	差异化套餐3	428	61.0	443	40.0	11.0	46.0	7.5	932	12		distinct	distinct
+sim-416	eleme	差异化营养厨房36	特色营养套餐236	差异化套餐4	445	68.3	703	40.0	15.0	102.0	3.0	1005	0		distinct	distinct
+sim-417	jd	差异化营养厨房37	特色营养套餐237	差异化套餐5	462	20.6	605	40.0	29.0	46.0	5.5	1078	3		distinct	distinct
+sim-418	meituan	差异化营养厨房38	特色营养套餐238	差异化套餐6	479	27.0	444	15.0	8.0	78.0	10.5	1151	6		distinct	distinct
+sim-419	eleme	差异化营养厨房39	特色营养套餐239	差异化套餐7	496	34.3	379	15.0	15.0	46.0	4.0	1224	9		distinct	distinct
+sim-420	jd	差异化营养厨房40	特色营养套餐240	差异化套餐8	513	41.6	561	15.0	21.0	78.0	7.5	1297	12		distinct	distinct

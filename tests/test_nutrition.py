@@ -8,7 +8,11 @@ from pathlib import Path
 from app.breakfast import get_breakfast_preset, list_breakfast_presets
 from app.menu_catalog import MenuCatalog
 from app.nutrition import NutritionInputError, NutritionRequest, calculate_daily_nutrition
-from app.recommendation import filter_similar_dishes, recommend_takeaway_plans
+from app.recommendation import (
+    RecommendationError,
+    filter_similar_dishes,
+    recommend_takeaway_plans,
+)
 
 
 class NutritionTest(unittest.TestCase):
@@ -75,11 +79,11 @@ class MenuCatalogTest(unittest.TestCase):
         self.catalog = MenuCatalog(file_path)
 
     def test_loads_complete_synthetic_menu(self) -> None:
-        # 数据集应包含 160 道菜，并且每个 ID 必须唯一。
+        # 数据集应包含 420 道菜，并且每个 ID 必须唯一。
         items = self.catalog.load()
 
-        self.assertEqual(len(items), 160)
-        self.assertEqual(len({item["id"] for item in items}), 160)
+        self.assertEqual(len(items), 420)
+        self.assertEqual(len({item["id"] for item in items}), 420)
 
     def test_similar_nutrition_groups_have_large_price_gaps(self) -> None:
         # 至少 20 组菜品应保持营养接近，同时最高价达到最低价的 2.5 倍以上。
@@ -88,16 +92,57 @@ class MenuCatalogTest(unittest.TestCase):
             if group := item.get("comparison_group"):
                 groups[str(group)].append(item)
 
-        self.assertGreaterEqual(len(groups), 20)
+        self.assertEqual(len(groups), 60)
+        self.assertTrue(all(len(items) == 3 for items in groups.values()))
         for items in groups.values():
             prices = [float(item["price_yuan"]) for item in items]
             self.assertGreaterEqual(max(prices) / min(prices), 2.5)
 
-            # 同组任意营养字段的最大值与最小值相差不超过 15%。
-            for nutrient in items[0]["nutrition"]:
+            # 同组五项近似判断字段的最大值与最小值相差不超过 10%。
+            for nutrient in (
+                "energy_kcal",
+                "protein_g",
+                "fat_g",
+                "carbohydrate_g",
+                "fiber_g",
+            ):
                 values = [float(item["nutrition"][nutrient]) for item in items]
                 if max(values) > 0:
-                    self.assertLessEqual((max(values) - min(values)) / max(values), 0.15)
+                    self.assertLessEqual((max(values) - min(values)) / max(values), 0.10)
+
+    def test_distinct_items_are_pairwise_different(self) -> None:
+        # 240 道差异化菜品任意两道之间至少有一项核心营养差异超过 10%。
+        items = [
+            item
+            for item in self.catalog.load()
+            if item.get("data_role") == "distinct"
+        ]
+        fields = (
+            "energy_kcal",
+            "protein_g",
+            "fat_g",
+            "carbohydrate_g",
+            "fiber_g",
+        )
+
+        self.assertEqual(len(items), 240)
+        for index, first in enumerate(items):
+            for second in items[index + 1 :]:
+                self.assertTrue(
+                    any(
+                        abs(
+                            float(first["nutrition"][field])
+                            - float(second["nutrition"][field])
+                        )
+                        / max(
+                            abs(float(first["nutrition"][field])),
+                            abs(float(second["nutrition"][field])),
+                            1.0,
+                        )
+                        > 0.10
+                        for field in fields
+                    )
+                )
 
     def test_filters_menu_by_platform_and_price(self) -> None:
         # 组合筛选后，每条结果都必须同时满足平台和最高价格条件。
@@ -217,6 +262,19 @@ class RecommendationTest(unittest.TestCase):
         self.assertEqual(report["removed_count"], 1)
         self.assertEqual(report["removed_examples"][0]["price_saving_yuan"], 0)
 
+    def test_sodium_and_sugar_do_not_affect_dish_similarity(self) -> None:
+        # 五项主要营养相同，即使钠和添加糖差异很大，仍只保留价格更低的菜。
+        cheap = self._item("cheap", 20, energy_kcal=500)
+        expensive = self._item("expensive", 50, energy_kcal=500)
+        expensive["nutrition"]["sodium_mg"] = 1500
+        expensive["nutrition"]["added_sugar_g"] = 20
+        different = self._item("different", 30, energy_kcal=700)
+
+        retained, report = filter_similar_dishes([cheap, expensive, different])
+
+        self.assertEqual({item["id"] for item in retained}, {"cheap", "different"})
+        self.assertEqual(report["removed_count"], 1)
+
     def test_same_dish_name_cannot_form_a_pair(self) -> None:
         # 即使营养差异较大而未被近似筛选删除，同名菜也不能同时作为午餐和晚餐。
         first = self._item("same-a", 20, energy_kcal=500, dish_name="同名套餐")
@@ -231,6 +289,60 @@ class RecommendationTest(unittest.TestCase):
         self.assertTrue(
             all(plan["lunch"]["dish_name"] != plan["dinner"]["dish_name"] for plan in result["plans"])
         )
+
+    def test_higher_lunch_priority_dish_is_assigned_to_lunch(self) -> None:
+        # 高热量、高估算复合碳水和高蛋白菜应作为午餐，而不受输入顺序影响。
+        lighter = self._item(
+            "lighter",
+            25,
+            energy_kcal=420,
+            protein_g=20,
+            carbohydrate_g=45,
+            added_sugar_g=5,
+        )
+        substantial = self._item(
+            "substantial",
+            35,
+            energy_kcal=850,
+            protein_g=42,
+            carbohydrate_g=105,
+            added_sugar_g=5,
+        )
+
+        result = recommend_takeaway_plans([lighter, substantial], self.analysis)
+        plan = result["plans"][0]
+
+        self.assertEqual(plan["lunch"]["id"], "substantial")
+        self.assertEqual(plan["dinner"]["id"], "lighter")
+        self.assertGreater(
+            plan["meal_ordering"]["lunch_priority_score"],
+            plan["meal_ordering"]["dinner_priority_score"],
+        )
+
+    def test_budget_excludes_expensive_pairs_before_scoring(self) -> None:
+        # 预算 55 元时只有 20 元与 30 元菜品的组合可以进入营养评分。
+        cheap = self._item("cheap", 20, energy_kcal=500)
+        medium = self._item("medium", 30, energy_kcal=700)
+        expensive = self._item("expensive", 70, energy_kcal=900)
+
+        result = recommend_takeaway_plans(
+            [cheap, medium, expensive],
+            self.analysis,
+            budget_yuan=55,
+        )
+
+        self.assertEqual(result["budget_yuan"], 55)
+        self.assertEqual(result["over_budget_pairs_skipped"], 2)
+        self.assertEqual(result["evaluated_combinations"], 1)
+        self.assertLessEqual(result["plans"][0]["total_price_yuan"], 55)
+
+    def test_rejects_budget_with_no_available_pair(self) -> None:
+        # 预算低于任意两道菜的价格总和时，应返回明确的无可用组合异常。
+        first = self._item("first", 20, energy_kcal=500)
+        second = self._item("second", 30, energy_kcal=700)
+
+        with self.assertRaises(RecommendationError):
+            recommend_takeaway_plans([first, second], self.analysis, budget_yuan=40)
 
     def test_breakfast_is_added_to_daily_totals(self) -> None:
         # 早餐营养应逐项加入午晚两餐，最终全天总量才用于偏离评分。
@@ -263,6 +375,9 @@ class RecommendationTest(unittest.TestCase):
         price: float,
         energy_kcal: float = 60,
         dish_name: str | None = None,
+        protein_g: float = 6,
+        carbohydrate_g: float = 8,
+        added_sugar_g: float = 1,
     ) -> dict[str, object]:
         """创建一条营养值固定的最小测试菜品。"""
 
@@ -275,12 +390,12 @@ class RecommendationTest(unittest.TestCase):
             "price_yuan": price,
             "nutrition": {
                 "energy_kcal": energy_kcal,
-                "protein_g": 6,
+                "protein_g": protein_g,
                 "fat_g": 3,
-                "carbohydrate_g": 8,
+                "carbohydrate_g": carbohydrate_g,
                 "fiber_g": 1.5,
                 "sodium_mg": 100,
-                "added_sugar_g": 1,
+                "added_sugar_g": added_sugar_g,
             },
         }
 
