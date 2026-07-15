@@ -41,6 +41,8 @@ LUNCH_PRIORITY_WEIGHTS = {
     "complex_carbohydrate": 0.35,
     "protein": 0.25,
 }
+MAX_EXACT_RESULTS = 10
+MIN_RECOMMENDATION_RESULTS = 3
 
 
 # 每项依次为菜单字段、每日目标字段和约束类型。
@@ -141,8 +143,9 @@ def recommend_takeaway_plans(
     weight_vector = tuple(weights[field] for field in NUTRIENT_FIELDS)
     energy_target = daily_targets["energy_kcal"]
 
-    # exact_candidates 只保存精确解；top_three 的长度始终不超过 3。
+    # exact_candidates 最多保存 10 个最低价精确解；top_three 始终维护三个兜底解。
     exact_candidates: list[PairCandidate] = []
+    exact_match_count = 0
     top_three: list[PairCandidate] = []
     same_name_pairs_skipped = 0
     over_budget_pairs_skipped = 0
@@ -188,15 +191,10 @@ def recommend_takeaway_plans(
         )
         energy_lower_bound = energy_ratio * weights["energy_kcal"]
 
-        # 已找到精确解后，热量不满足的组合一定不可能成为新的精确解。
-        if exact_candidates and energy_ratio > 0:
-            pruned_combinations += 1
-            continue
-
-        # 尚无精确解时，如果仅热量偏离已劣于当前第三名，也无需计算其余六项。
+        # 如果仅热量偏离已劣于当前第三名，该非精确组合不可能进入补充结果。
+        # 热量偏离为 0 的组合不会在这里被剪枝，因此仍可完整识别全部精确解。
         if (
-            not exact_candidates
-            and len(top_three) == 3
+            len(top_three) == MIN_RECOMMENDATION_RESULTS
             and energy_lower_bound > top_three[-1].score
         ):
             pruned_combinations += 1
@@ -216,9 +214,9 @@ def recommend_takeaway_plans(
         )
 
         if score <= 1e-12:
-            exact_candidates.append(candidate)
-            top_three.clear()
-        elif not exact_candidates:
+            exact_match_count += 1
+            _keep_cheapest_exact(exact_candidates, candidate)
+        else:
             _keep_best_three(top_three, candidate)
 
     if considered_combinations == 0:
@@ -226,14 +224,26 @@ def recommend_takeaway_plans(
             raise RecommendationError("no valid two-dish combinations fit within the budget")
         raise RecommendationError("no valid two-dish combinations remain after filtering")
 
-    if exact_candidates:
-        selected = sorted(exact_candidates, key=PairCandidate.price_sort_key)
+    sorted_exact = sorted(exact_candidates, key=PairCandidate.price_sort_key)
+    sorted_closest = sorted(top_three, key=PairCandidate.score_sort_key)
+    if exact_match_count >= MIN_RECOMMENDATION_RESULTS:
+        selected = sorted_exact[:MAX_EXACT_RESULTS]
         mode = "exact"
-        message = "找到完全满足营养条件的组合，已按总价格从低到高排列。"
+        message = "找到满足营养条件的组合，最多展示价格最低的十种。"
+        supplemented_count = 0
+    elif exact_match_count > 0:
+        supplemented_count = min(
+            MIN_RECOMMENDATION_RESULTS - len(sorted_exact),
+            len(sorted_closest),
+        )
+        selected = sorted_exact + sorted_closest[:supplemented_count]
+        mode = "mixed"
+        message = "满足条件的组合不足三种，已用偏离程度最小的组合补足。"
     else:
-        selected = sorted(top_three, key=PairCandidate.score_sort_key)
+        selected = sorted_closest[:MIN_RECOMMENDATION_RESULTS]
         mode = "closest"
         message = "没有组合完全满足全部条件，以下为加权偏离程度最小的三个组合。"
+        supplemented_count = len(selected)
 
     # 仅在候选最终入选后构造详细偏离字典，显著降低大量菜品时的对象分配。
     plans = [
@@ -252,7 +262,10 @@ def recommend_takeaway_plans(
         "evaluated_combinations": considered_combinations,
         "fully_scored_combinations": fully_scored_combinations,
         "pruned_combinations": pruned_combinations,
-        "exact_match_count": len(exact_candidates),
+        "exact_match_count": exact_match_count,
+        "returned_exact_count": sum(plan["is_exact_match"] for plan in plans),
+        "supplemented_count": supplemented_count,
+        "result_limit": MAX_EXACT_RESULTS,
         "weights": {key: round(value, 6) for key, value in weights.items()},
         "plans": plans,
     }
@@ -425,6 +438,17 @@ def _normalized_dish_name(name: str) -> str:
     """统一菜名首尾空格和大小写，用于阻止同名菜重复进入组合。"""
 
     return name.strip().casefold()
+
+
+def _keep_cheapest_exact(
+    exact_candidates: list[PairCandidate],
+    candidate: PairCandidate,
+) -> None:
+    """流式保留价格最低的十个精确组合。"""
+
+    exact_candidates.append(candidate)
+    exact_candidates.sort(key=PairCandidate.price_sort_key)
+    del exact_candidates[MAX_EXACT_RESULTS:]
 
 
 def _keep_best_three(top_three: list[PairCandidate], candidate: PairCandidate) -> None:

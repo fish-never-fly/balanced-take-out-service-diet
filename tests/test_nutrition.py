@@ -236,6 +236,45 @@ class RecommendationTest(unittest.TestCase):
             [15, 25, 30],
         )
 
+    def test_limits_exact_matches_to_ten_cheapest_plans(self) -> None:
+        # 六道菜产生十五个精确组合时，只返回价格最低的十个。
+        energies = (50, 70, 90, 110, 130, 150)
+        items = [
+            self._item(f"item-{index}", 10 + index, energy_kcal=energy)
+            for index, energy in enumerate(energies)
+        ]
+        result = recommend_takeaway_plans(
+            items,
+            self._analysis_for_energy(100, 400),
+        )
+
+        self.assertEqual(result["mode"], "exact")
+        self.assertEqual(result["exact_match_count"], 15)
+        self.assertEqual(result["returned_exact_count"], 10)
+        self.assertEqual(len(result["plans"]), 10)
+        prices = [plan["total_price_yuan"] for plan in result["plans"]]
+        self.assertEqual(prices, sorted(prices))
+
+    def test_supplements_when_exact_matches_are_fewer_than_three(self) -> None:
+        # 只有 80+120 热量组合精确满足要求，其余两个结果应来自偏离最小组合。
+        items = [
+            self._item("energy-50", 10, energy_kcal=50),
+            self._item("energy-80", 11, energy_kcal=80),
+            self._item("energy-120", 12, energy_kcal=120),
+            self._item("energy-170", 13, energy_kcal=170),
+        ]
+        result = recommend_takeaway_plans(
+            items,
+            self._analysis_for_energy(190, 210),
+        )
+
+        self.assertEqual(result["mode"], "mixed")
+        self.assertEqual(result["exact_match_count"], 1)
+        self.assertEqual(result["returned_exact_count"], 1)
+        self.assertEqual(result["supplemented_count"], 2)
+        self.assertEqual(len(result["plans"]), 3)
+        self.assertTrue(result["plans"][0]["is_exact_match"])
+
     def test_similar_expensive_item_is_removed_before_pairing(self) -> None:
         # 两道营养几乎相同的菜只保留便宜款，营养差异明显的第三道菜继续保留。
         cheap = self._item("cheap", 20, energy_kcal=500)
@@ -368,6 +407,29 @@ class RecommendationTest(unittest.TestCase):
         self.assertEqual(len(presets), 7)
         self.assertEqual(len({preset["id"] for preset in presets}), 7)
         self.assertTrue(all("nutrition" in preset for preset in presets))
+
+    @staticmethod
+    def _analysis_for_energy(minimum: float, maximum: float) -> dict[str, object]:
+        """创建只在热量条件上区分组合的宽泛营养目标。"""
+
+        return {
+            "input": {
+                "health_flags": {
+                    "high_blood_glucose": False,
+                    "high_blood_lipids": False,
+                    "high_blood_pressure": False,
+                }
+            },
+            "daily_targets": {
+                "energy_kcal": {"min": minimum, "max": maximum},
+                "protein_g": {"min": 5, "max": 100},
+                "fat_g": {"min": 2, "max": 100},
+                "carbohydrate_g": {"min": 5, "max": 200},
+                "dietary_fiber_g": 1,
+                "sodium_max_mg": 5000,
+                "added_sugar_max_g": 100,
+            },
+        }
 
     @staticmethod
     def _item(

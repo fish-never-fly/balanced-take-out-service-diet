@@ -289,7 +289,9 @@
           `预算上限 ¥${result.budget_yuan.toFixed(2)}，排除 ${result.over_budget_pairs_skipped} 个超预算组合，` +
           `另跳过 ${result.same_name_pairs_skipped} 个同名组合。` +
           `${result.message} 共考虑 ${result.evaluated_combinations} 个组合，` +
-          `完整评分 ${result.fully_scored_combinations} 个，安全剪枝 ${result.pruned_combinations} 个。`;
+          `完整评分 ${result.fully_scored_combinations} 个，安全剪枝 ${result.pruned_combinations} 个。` +
+          `满足条件共 ${result.exact_match_count} 个，本次展示精确方案 ${result.returned_exact_count} 个，` +
+          `补充方案 ${result.supplemented_count} 个。`;
 
         recommendations.innerHTML = result.plans.map((plan, index) => {
           // 兜底方案按单项加权偏离从高到低展示前三个主要不足或超标项。

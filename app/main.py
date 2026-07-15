@@ -20,7 +20,7 @@ from .recommendation import RecommendationError, recommend_takeaway_plans
 
 
 # 创建 Web 应用实例；标题和版本会显示在 /docs 自动接口文档中。
-app = FastAPI(title="Nutrition Analysis Service", version="1.7.0")
+app = FastAPI(title="Nutrition Analysis Service", version="1.8.0")
 
 # 默认读取项目内置的模拟菜单。部署或测试时可通过环境变量替换数据文件，
 # 从而不必修改源代码即可使用另一份相同结构的 JSON。
