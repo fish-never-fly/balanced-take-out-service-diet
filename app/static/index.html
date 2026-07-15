@@ -125,6 +125,13 @@
       .menu-item h3 { margin: 0 0 7px; font-size: 1rem; }
       .menu-item p { margin: 4px 0 0; font-size: 0.9rem; }
 
+      /* 附近模拟商家采用纵向卡片，商家内部菜品使用紧凑的响应式网格。 */
+      .nearby-results { display: grid; gap: 14px; margin-top: 16px; }
+      .nearby-store { padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: white; }
+      .nearby-store-header { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+      .nearby-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 12px; }
+      .nearby-item { padding: 10px; border-radius: 12px; background: var(--bg); }
+
       /* 推荐方案纵向排列，每张卡片展示两餐、总价格、营养合计和偏离信息。 */
       .recommendations { display: grid; gap: 14px; margin-top: 16px; }
 
@@ -221,6 +228,26 @@
         <p>以下数据仅用于后续推荐算法测试，不代表真实商家的检测结果。</p>
         <div id="menu-grid" class="menu-grid"></div>
       </section>
+
+      <!-- 浏览器定位区：使用用户授权坐标生成附近多平台模拟商家。 -->
+      <section class="panel">
+        <h2>当前位置附近的模拟商家</h2>
+        <p>定位仅用于本次模拟查询；返回位置、配送费和商家距离均为模拟数据。</p>
+        <div class="grid" style="margin-top: 16px;">
+          <label>
+            搜索半径（米）
+            <input id="nearby-radius" type="number" min="100" max="20000" step="100" value="3000" />
+          </label>
+        </div>
+        <div class="choices">
+          <label class="choice"><input class="nearby-platform" type="checkbox" value="meituan" checked />美团</label>
+          <label class="choice"><input class="nearby-platform" type="checkbox" value="eleme" checked />饿了么</label>
+          <label class="choice"><input class="nearby-platform" type="checkbox" value="jd" checked />京东</label>
+        </div>
+        <button id="locate-button" type="button">获取当前位置并模拟附近商家</button>
+        <div id="nearby-status" class="status"></div>
+        <div id="nearby-results" class="nearby-results"></div>
+      </section>
     </main>
 
     <script>
@@ -233,6 +260,9 @@
       const menuGrid = document.getElementById("menu-grid");
       const breakfastPreset = document.getElementById("breakfast-preset");
       const breakfastDetails = document.getElementById("breakfast-details");
+      const locateButton = document.getElementById("locate-button");
+      const nearbyStatus = document.getElementById("nearby-status");
+      const nearbyResults = document.getElementById("nearby-results");
       let breakfastPresets = [];
 
       // 把后端返回的 {min, max} 区间转换为适合页面显示的文本。
@@ -435,9 +465,95 @@
         }
       }
 
+      // 读取附近商家平台复选框，至少应选择一个平台。
+      function selectedNearbyPlatforms() {
+        return [...document.querySelectorAll(".nearby-platform:checked")]
+          .map((node) => node.value);
+      }
+
+      // 将浏览器回调形式的定位接口包装为 Promise，便于在 async 函数中使用。
+      function currentPosition() {
+        return new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000,
+          });
+        });
+      }
+
+      // 请求当前位置并调用附近模拟接口，整个过程不会连接真实外卖平台。
+      async function locateAndLoadNearby() {
+        const platforms = selectedNearbyPlatforms();
+        if (!platforms.length) {
+          nearbyStatus.textContent = "请至少选择一个平台。";
+          return;
+        }
+        if (!navigator.geolocation) {
+          nearbyStatus.textContent = "当前浏览器不支持定位功能。";
+          return;
+        }
+
+        locateButton.disabled = true;
+        nearbyStatus.textContent = "正在获取当前位置...";
+        nearbyResults.innerHTML = "";
+        try {
+          const position = await currentPosition();
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          nearbyStatus.textContent = "定位成功，正在生成附近模拟商家...";
+
+          const response = await fetch("/nearby-stores", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              latitude,
+              longitude,
+              radius_m: Number(document.getElementById("nearby-radius").value),
+              platforms,
+              store_limit: 30,
+              items_per_store: 6,
+            }),
+          });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.detail || "附近商家查询失败");
+
+          nearbyStatus.textContent =
+            `当前位置 ${latitude.toFixed(5)}, ${longitude.toFixed(5)}；` +
+            `找到 ${payload.matched_store_count} 家，展示 ${payload.returned_store_count} 家。`;
+          if (!payload.stores.length) {
+            nearbyResults.innerHTML = '<div class="muted">当前半径内没有模拟商家，请扩大搜索范围。</div>';
+            return;
+          }
+
+          nearbyResults.innerHTML = payload.stores.map((store) => `
+            <article class="nearby-store">
+              <div class="nearby-store-header">
+                <strong>${store.store_name}</strong>
+                <span class="muted">${store.platform} · ${store.distance_m} m</span>
+              </div>
+              <p>配送费 ¥${store.delivery_fee_yuan} · 起送 ¥${store.minimum_order_yuan}</p>
+              <div class="nearby-items">
+                ${store.items.map((item) => `
+                  <div class="nearby-item">
+                    <strong>${item.dish_name}</strong>
+                    <div class="muted">¥${item.price_yuan} · ${item.nutrition.energy_kcal} kcal</div>
+                  </div>
+                `).join("")}
+              </div>
+            </article>
+          `).join("");
+        } catch (error) {
+          nearbyStatus.textContent = error.message || "无法获取当前位置。";
+        } finally {
+          locateButton.disabled = false;
+        }
+      }
+
       // 注册按钮点击事件，并在页面脚本加载完成后立即获取模拟菜单预览。
       calculateButton.addEventListener("click", calculateNutrition);
       breakfastPreset.addEventListener("change", renderBreakfastDetails);
+      locateButton.addEventListener("click", locateAndLoadNearby);
       loadBreakfastPresets();
       loadMenuPreview();
     </script>

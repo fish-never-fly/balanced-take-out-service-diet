@@ -20,6 +20,8 @@ python -m venv .venv
 POST /nutrition
 POST /recommendations
 GET /breakfast-presets
+GET /platforms
+POST /nearby-stores
 GET /menu-items
 GET /menu-items?platform=meituan&max_price_yuan=30
 GET /menu-items?category=沙拉
@@ -101,6 +103,31 @@ GET /health
 
 `budget_yuan` 表示午餐和晚餐的总预算，不包含早餐。价格总和超过预算的组合会在
 营养评分前直接排除；如果没有任何组合满足预算，接口返回 HTTP 422 错误。
+
+## 多平台附近商家模拟
+
+`GET /platforms` 返回美团、饿了么和京东模拟数据中的菜品数与商家数。
+
+网页中的“获取当前位置并模拟附近商家”按钮使用浏览器 Geolocation API 获取用户
+授权的当前经纬度，然后调用 `POST /nearby-stores`：
+
+```json
+{
+  "latitude": 31.2304,
+  "longitude": 121.4737,
+  "radius_m": 3000,
+  "platforms": ["meituan", "eleme", "jd"],
+  "store_limit": 30,
+  "items_per_store": 6
+}
+```
+
+后端按平台和商家名称分组，并根据稳定哈希在当前位置周围生成模拟距离、坐标、
+配送费和起送价。同一位置与参数会得到相同结果。该功能仅用于模拟根据当前位置
+收集商家信息，不连接、不抓取任何真实外卖平台。
+
+浏览器定位通常要求通过 `http://127.0.0.1:8000/` 或 HTTPS 打开页面；直接使用
+`file://` 打开 HTML 时，定位或接口请求可能被浏览器阻止。
 
 ## 早餐影响
 

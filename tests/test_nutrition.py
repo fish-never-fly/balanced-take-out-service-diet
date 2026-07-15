@@ -7,6 +7,7 @@ from pathlib import Path
 
 from app.breakfast import get_breakfast_preset, list_breakfast_presets
 from app.menu_catalog import MenuCatalog
+from app.nearby import NearbyRequest, NearbyRequestError, platform_summary, simulate_nearby_stores
 from app.nutrition import NutritionInputError, NutritionRequest, calculate_daily_nutrition
 from app.recommendation import (
     RecommendationError,
@@ -158,6 +159,50 @@ class MenuCatalogTest(unittest.TestCase):
         second = self.catalog.load()
 
         self.assertIs(first, second)
+
+
+class NearbySimulationTest(unittest.TestCase):
+    """验证多平台汇总和当前位置附近商家模拟。"""
+
+    def setUp(self) -> None:
+        file_path = Path(__file__).resolve().parent.parent / "examples" / "nutrition_menu.json"
+        self.items = MenuCatalog(file_path).load()
+
+    def test_platform_summary_covers_all_items(self) -> None:
+        summary = platform_summary(self.items)
+
+        self.assertEqual({entry["platform"] for entry in summary}, {"meituan", "eleme", "jd"})
+        self.assertEqual(sum(entry["item_count"] for entry in summary), 420)
+        self.assertTrue(all(entry["store_count"] > 0 for entry in summary))
+
+    def test_nearby_results_respect_radius_and_platform(self) -> None:
+        request = NearbyRequest(
+            latitude=31.2304,
+            longitude=121.4737,
+            radius_m=3000,
+            platforms=("meituan",),
+            store_limit=20,
+            items_per_store=5,
+        )
+        result = simulate_nearby_stores(self.items, request)
+
+        self.assertEqual(result["source"], "simulated-nearby")
+        self.assertTrue(result["stores"])
+        self.assertTrue(all(store["platform"] == "meituan" for store in result["stores"]))
+        self.assertTrue(all(store["distance_m"] <= 3000 for store in result["stores"]))
+        self.assertTrue(all(len(store["items"]) <= 5 for store in result["stores"]))
+
+    def test_nearby_results_are_deterministic(self) -> None:
+        request = NearbyRequest(latitude=39.9042, longitude=116.4074, radius_m=5000)
+
+        first = simulate_nearby_stores(self.items, request)
+        second = simulate_nearby_stores(self.items, request)
+
+        self.assertEqual(first, second)
+
+    def test_rejects_invalid_location(self) -> None:
+        with self.assertRaises(NearbyRequestError):
+            NearbyRequest(latitude=100, longitude=116.4)
 
 
 class RecommendationTest(unittest.TestCase):

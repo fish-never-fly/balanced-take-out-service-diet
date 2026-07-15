@@ -15,12 +15,13 @@ from fastapi.responses import HTMLResponse
 # 菜单模块负责模拟数据读取，营养模块负责身体信息校验和营养公式计算。
 from .breakfast import BreakfastPresetError, get_breakfast_preset, list_breakfast_presets
 from .menu_catalog import MenuCatalog
+from .nearby import NearbyRequest, NearbyRequestError, platform_summary, simulate_nearby_stores
 from .nutrition import NutritionInputError, NutritionRequest, calculate_daily_nutrition
 from .recommendation import RecommendationError, recommend_takeaway_plans
 
 
 # 创建 Web 应用实例；标题和版本会显示在 /docs 自动接口文档中。
-app = FastAPI(title="Nutrition Analysis Service", version="1.8.0")
+app = FastAPI(title="Nutrition Analysis Service", version="2.0.0")
 
 # 默认读取项目内置的模拟菜单。部署或测试时可通过环境变量替换数据文件，
 # 从而不必修改源代码即可使用另一份相同结构的 JSON。
@@ -97,6 +98,26 @@ def breakfast_presets() -> list[dict[str, Any]]:
     """返回可选择的经典早餐组合及估算营养值。"""
 
     return list_breakfast_presets()
+
+
+# 平台汇总接口用于确认当前模拟数据中三个平台的菜品和商家规模。
+@app.get("/platforms")
+def platforms() -> list[dict[str, Any]]:
+    """返回美团、饿了么和京东模拟数据统计。"""
+
+    return platform_summary(menu_catalog.load())
+
+
+# 根据浏览器提供的当前位置，生成多平台附近商家与菜品模拟结果。
+@app.post("/nearby-stores")
+def nearby_stores(payload: dict[str, Any]) -> dict[str, Any]:
+    """校验定位参数并返回当前位置附近的模拟商家。"""
+
+    try:
+        request = NearbyRequest.from_dict(payload)
+    except NearbyRequestError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return simulate_nearby_stores(menu_catalog.load(), request)
 
 
 # 模拟菜单查询接口支持按平台、分类、最高价格和返回数量筛选。
