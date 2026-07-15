@@ -15,12 +15,19 @@ class MenuCatalog:
     """封装模拟菜单文件，向接口和推荐算法提供可信的菜品列表。"""
 
     def __init__(self, file_path: str | Path) -> None:
-        """保存菜单文件路径；此时不读取文件，读取操作由 load 触发。"""
+        """保存菜单路径并初始化基于文件修改时间的内存缓存。"""
 
         self.file_path = Path(file_path)
+        self._cached_mtime_ns: int | None = None
+        self._cached_items: list[dict[str, Any]] | None = None
 
     def load(self) -> list[dict[str, Any]]:
         """读取 JSON、校验每道菜并检查菜品 ID 是否唯一。"""
+
+        # 文件未变化时直接复用已校验列表，避免每次推荐都重复解析 160 条 JSON。
+        mtime_ns = self.file_path.stat().st_mtime_ns
+        if self._cached_mtime_ns == mtime_ns and self._cached_items is not None:
+            return self._cached_items
 
         # 使用 UTF-8 读取中文数据，并要求顶层必须包含 items 数组。
         payload = json.loads(self.file_path.read_text(encoding="utf-8"))
@@ -34,6 +41,10 @@ class MenuCatalog:
         ids = [item["id"] for item in validated]
         if len(ids) != len(set(ids)):
             raise MenuCatalogError("menu item ids must be unique")
+
+        # 只有全部校验成功后才更新缓存，防止无效文件污染上一份可用结果。
+        self._cached_mtime_ns = mtime_ns
+        self._cached_items = validated
         return validated
 
     def query(

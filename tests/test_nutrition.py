@@ -1,11 +1,14 @@
 """营养计算和模拟菜单的回归测试。"""
 
 import unittest
+from collections import defaultdict
+from copy import deepcopy
 from pathlib import Path
 
+from app.breakfast import get_breakfast_preset, list_breakfast_presets
 from app.menu_catalog import MenuCatalog
 from app.nutrition import NutritionInputError, NutritionRequest, calculate_daily_nutrition
-from app.recommendation import recommend_takeaway_plans
+from app.recommendation import filter_similar_dishes, recommend_takeaway_plans
 
 
 class NutritionTest(unittest.TestCase):
@@ -72,11 +75,29 @@ class MenuCatalogTest(unittest.TestCase):
         self.catalog = MenuCatalog(file_path)
 
     def test_loads_complete_synthetic_menu(self) -> None:
-        # 数据集应包含 44 道菜，并且每个 ID 必须唯一。
+        # 数据集应包含 160 道菜，并且每个 ID 必须唯一。
         items = self.catalog.load()
 
-        self.assertEqual(len(items), 44)
-        self.assertEqual(len({item["id"] for item in items}), 44)
+        self.assertEqual(len(items), 160)
+        self.assertEqual(len({item["id"] for item in items}), 160)
+
+    def test_similar_nutrition_groups_have_large_price_gaps(self) -> None:
+        # 至少 20 组菜品应保持营养接近，同时最高价达到最低价的 2.5 倍以上。
+        groups: dict[str, list[dict[str, object]]] = defaultdict(list)
+        for item in self.catalog.load():
+            if group := item.get("comparison_group"):
+                groups[str(group)].append(item)
+
+        self.assertGreaterEqual(len(groups), 20)
+        for items in groups.values():
+            prices = [float(item["price_yuan"]) for item in items]
+            self.assertGreaterEqual(max(prices) / min(prices), 2.5)
+
+            # 同组任意营养字段的最大值与最小值相差不超过 15%。
+            for nutrient in items[0]["nutrition"]:
+                values = [float(item["nutrition"][nutrient]) for item in items]
+                if max(values) > 0:
+                    self.assertLessEqual((max(values) - min(values)) / max(values), 0.15)
 
     def test_filters_menu_by_platform_and_price(self) -> None:
         # 组合筛选后，每条结果都必须同时满足平台和最高价格条件。
@@ -85,6 +106,13 @@ class MenuCatalogTest(unittest.TestCase):
         self.assertTrue(items)
         self.assertTrue(all(item["platform"] == "meituan" for item in items))
         self.assertTrue(all(item["price_yuan"] <= 30 for item in items))
+
+    def test_reuses_validated_menu_cache(self) -> None:
+        # 文件修改时间未变化时，第二次读取应直接复用已解析和校验的列表。
+        first = self.catalog.load()
+        second = self.catalog.load()
+
+        self.assertIs(first, second)
 
 
 class RecommendationTest(unittest.TestCase):
@@ -104,21 +132,36 @@ class RecommendationTest(unittest.TestCase):
         )
 
     def test_returns_three_closest_real_fixture_combinations(self) -> None:
-        # 当前 44 道模拟菜品没有两餐组合同时满足全部每日目标，因此应返回前三名。
-        result = recommend_takeaway_plans(self.items, self.analysis)
+        # 人为提高纤维目标以确保无精确解，从而稳定验证返回前三名的兜底分支。
+        impossible_analysis = deepcopy(self.analysis)
+        impossible_analysis["daily_targets"]["dietary_fiber_g"] = 1000
+        result = recommend_takeaway_plans(self.items, impossible_analysis)
 
         self.assertEqual(result["mode"], "closest")
-        self.assertEqual(result["evaluated_combinations"], 946)
+        retained_count = result["candidate_filter"]["retained_count"]
+        self.assertGreater(result["candidate_filter"]["removed_count"], 0)
+        self.assertEqual(
+            result["evaluated_combinations"],
+            retained_count * (retained_count - 1) // 2 - result["same_name_pairs_skipped"],
+        )
         self.assertEqual(len(result["plans"]), 3)
+        self.assertLessEqual(
+            result["fully_scored_combinations"],
+            result["evaluated_combinations"],
+        )
+        self.assertEqual(
+            result["fully_scored_combinations"] + result["pruned_combinations"],
+            result["evaluated_combinations"],
+        )
         scores = [plan["deviation_score"] for plan in result["plans"]]
         self.assertEqual(scores, sorted(scores))
 
     def test_returns_all_exact_matches_sorted_by_price(self) -> None:
         # 三道测试菜任意两道都满足宽泛目标，结果应返回全部三个组合并按价格排序。
         items = [
-            self._item("a", 10),
-            self._item("b", 20),
-            self._item("c", 5),
+            self._item("a", 10, energy_kcal=60),
+            self._item("b", 20, energy_kcal=80),
+            self._item("c", 5, energy_kcal=100),
         ]
         analysis = {
             "input": {
@@ -148,19 +191,90 @@ class RecommendationTest(unittest.TestCase):
             [15, 25, 30],
         )
 
+    def test_similar_expensive_item_is_removed_before_pairing(self) -> None:
+        # 两道营养几乎相同的菜只保留便宜款，营养差异明显的第三道菜继续保留。
+        cheap = self._item("cheap", 20, energy_kcal=500)
+        expensive = self._item("expensive", 60, energy_kcal=505)
+        different = self._item("different", 30, energy_kcal=700)
+
+        retained, report = filter_similar_dishes([expensive, different, cheap])
+
+        retained_ids = {item["id"] for item in retained}
+        self.assertEqual(retained_ids, {"cheap", "different"})
+        self.assertEqual(report["removed_count"], 1)
+        self.assertEqual(report["removed_examples"][0]["kept_id"], "cheap")
+        self.assertEqual(report["removed_examples"][0]["price_saving_yuan"], 40)
+
+    def test_similar_equal_price_items_keep_only_one(self) -> None:
+        # 营养和价格都相同的菜也只保留一条，按 ID 升序确定保留项。
+        first = self._item("a-first", 20, energy_kcal=500)
+        duplicate = self._item("b-duplicate", 20, energy_kcal=500)
+        different = self._item("different", 30, energy_kcal=700)
+
+        retained, report = filter_similar_dishes([duplicate, different, first])
+
+        self.assertEqual({item["id"] for item in retained}, {"a-first", "different"})
+        self.assertEqual(report["removed_count"], 1)
+        self.assertEqual(report["removed_examples"][0]["price_saving_yuan"], 0)
+
+    def test_same_dish_name_cannot_form_a_pair(self) -> None:
+        # 即使营养差异较大而未被近似筛选删除，同名菜也不能同时作为午餐和晚餐。
+        first = self._item("same-a", 20, energy_kcal=500, dish_name="同名套餐")
+        second = self._item("same-b", 25, energy_kcal=700, dish_name="同名套餐")
+        different = self._item("other", 30, energy_kcal=900, dish_name="其他套餐")
+
+        result = recommend_takeaway_plans([first, second, different], self.analysis)
+
+        self.assertEqual(result["candidate_filter"]["retained_count"], 3)
+        self.assertEqual(result["same_name_pairs_skipped"], 1)
+        self.assertEqual(result["evaluated_combinations"], 2)
+        self.assertTrue(
+            all(plan["lunch"]["dish_name"] != plan["dinner"]["dish_name"] for plan in result["plans"])
+        )
+
+    def test_breakfast_is_added_to_daily_totals(self) -> None:
+        # 早餐营养应逐项加入午晚两餐，最终全天总量才用于偏离评分。
+        breakfast = get_breakfast_preset("soy_egg_bread")
+        result = recommend_takeaway_plans(
+            self.items[:12],
+            self.analysis,
+            breakfast=breakfast,
+        )
+        first_plan = result["plans"][0]
+
+        self.assertEqual(result["breakfast"]["id"], "soy_egg_bread")
+        for nutrient, breakfast_value in breakfast["nutrition"].items():
+            self.assertEqual(
+                first_plan["daily_nutrition_totals"][nutrient],
+                first_plan["meal_nutrition_totals"][nutrient] + breakfast_value,
+            )
+
+    def test_breakfast_presets_are_complete(self) -> None:
+        # 七种选项包含“未吃早餐”和六种经典组合，且 ID 必须唯一。
+        presets = list_breakfast_presets()
+
+        self.assertEqual(len(presets), 7)
+        self.assertEqual(len({preset["id"] for preset in presets}), 7)
+        self.assertTrue(all("nutrition" in preset for preset in presets))
+
     @staticmethod
-    def _item(item_id: str, price: float) -> dict[str, object]:
+    def _item(
+        item_id: str,
+        price: float,
+        energy_kcal: float = 60,
+        dish_name: str | None = None,
+    ) -> dict[str, object]:
         """创建一条营养值固定的最小测试菜品。"""
 
         return {
             "id": item_id,
             "platform": "meituan",
             "store_name": "测试商家",
-            "dish_name": f"测试菜品 {item_id}",
+            "dish_name": dish_name or f"测试菜品 {item_id}",
             "category": "测试",
             "price_yuan": price,
             "nutrition": {
-                "energy_kcal": 60,
+                "energy_kcal": energy_kcal,
                 "protein_g": 6,
                 "fat_g": 3,
                 "carbohydrate_g": 8,

@@ -152,6 +152,7 @@
       .meal { padding: 12px; border-radius: 14px; background: var(--bg); }
       .meal strong { display: block; margin-top: 4px; }
       .plan-details { margin-top: 12px; color: var(--muted); line-height: 1.7; }
+      .breakfast-note { margin-top: 10px; color: var(--muted); font-size: 0.92rem; }
     </style>
   </head>
   <body>
@@ -181,7 +182,14 @@
               <option value="vigorous">剧烈运动</option>
             </select>
           </label>
+          <label>
+            今日早餐
+            <select id="breakfast-preset">
+              <option value="none">正在加载早餐组合...</option>
+            </select>
+          </label>
         </div>
+        <p id="breakfast-details" class="breakfast-note">早餐营养值将用于计算全天摄入。</p>
 
         <!-- 三高复选框默认不选中，勾选后会收紧对应营养物质的建议上限。 -->
         <div class="choices">
@@ -219,6 +227,9 @@
       const recommendationSummary = document.getElementById("recommendation-summary");
       const recommendations = document.getElementById("recommendations");
       const menuGrid = document.getElementById("menu-grid");
+      const breakfastPreset = document.getElementById("breakfast-preset");
+      const breakfastDetails = document.getElementById("breakfast-details");
+      let breakfastPresets = [];
 
       // 把后端返回的 {min, max} 区间转换为适合页面显示的文本。
       function rangeText(value, unit) {
@@ -267,8 +278,13 @@
           added_sugar_g: "添加糖",
         };
 
+        const filter = result.candidate_filter;
         recommendationSummary.textContent =
-          `${result.message} 共评估 ${result.evaluated_combinations} 个组合。`;
+          `早餐采用“${result.breakfast.name}”。营养近似筛选从 ${filter.original_count} 道菜中` +
+          `保留 ${filter.retained_count} 道，删除 ${filter.removed_count} 道较贵菜。` +
+          `另跳过 ${result.same_name_pairs_skipped} 个同名组合。` +
+          `${result.message} 共考虑 ${result.evaluated_combinations} 个组合，` +
+          `完整评分 ${result.fully_scored_combinations} 个，安全剪枝 ${result.pruned_combinations} 个。`;
 
         recommendations.innerHTML = result.plans.map((plan, index) => {
           // 兜底方案按单项加权偏离从高到低展示前三个主要不足或超标项。
@@ -281,7 +297,8 @@
             )
             .join("；");
 
-          const totals = plan.nutrition_totals;
+          const mealTotals = plan.meal_nutrition_totals;
+          const dailyTotals = plan.daily_nutrition_totals;
           return `
             <article class="plan">
               <div class="plan-header">
@@ -299,10 +316,12 @@
                 </div>
               </div>
               <div class="plan-details">
-                两餐合计：${totals.energy_kcal} kcal，蛋白质 ${totals.protein_g} g，
-                脂肪 ${totals.fat_g} g，碳水 ${totals.carbohydrate_g} g，
-                纤维 ${totals.fiber_g} g，钠 ${totals.sodium_mg} mg，
-                添加糖 ${totals.added_sugar_g} g。<br />
+                午晚两餐：${mealTotals.energy_kcal} kcal，蛋白质 ${mealTotals.protein_g} g，
+                脂肪 ${mealTotals.fat_g} g，碳水 ${mealTotals.carbohydrate_g} g。<br />
+                含早餐全天：${dailyTotals.energy_kcal} kcal，蛋白质 ${dailyTotals.protein_g} g，
+                脂肪 ${dailyTotals.fat_g} g，碳水 ${dailyTotals.carbohydrate_g} g，
+                纤维 ${dailyTotals.fiber_g} g，钠 ${dailyTotals.sodium_mg} mg，
+                添加糖 ${dailyTotals.added_sugar_g} g。<br />
                 ${plan.is_exact_match
                   ? "完全满足当前营养条件。"
                   : `加权偏离系数：${plan.deviation_score.toFixed(4)}。主要偏离：${mainDeviations}`}
@@ -332,6 +351,7 @@
               age: Number(document.getElementById("age").value),
               sex: document.getElementById("sex").value,
               activity_level: document.getElementById("activity-level").value,
+              breakfast_id: breakfastPreset.value,
               high_blood_glucose: document.getElementById("high-glucose").checked,
               high_blood_lipids: document.getElementById("high-lipids").checked,
               high_blood_pressure: document.getElementById("high-pressure").checked,
@@ -354,10 +374,40 @@
         }
       }
 
+      // 从后端加载经典早餐组合，避免前端重复维护营养估算值。
+      async function loadBreakfastPresets() {
+        try {
+          const response = await fetch("/breakfast-presets");
+          breakfastPresets = await response.json();
+          breakfastPreset.innerHTML = breakfastPresets.map((preset) =>
+            `<option value="${preset.id}">${preset.name}</option>`
+          ).join("");
+
+          // 默认选择较均衡的“豆浆＋鸡蛋＋全麦面包”。
+          breakfastPreset.value = "soy_egg_bread";
+          renderBreakfastDetails();
+        } catch (error) {
+          breakfastPreset.innerHTML = '<option value="none">未吃早餐</option>';
+          breakfastDetails.textContent = "早餐组合加载失败，将按未吃早餐计算。";
+        }
+      }
+
+      // 展示当前早餐的份量假设和主要营养值，让用户理解估算依据。
+      function renderBreakfastDetails() {
+        const preset = breakfastPresets.find((item) => item.id === breakfastPreset.value);
+        if (!preset) return;
+        const nutrition = preset.nutrition;
+        breakfastDetails.textContent =
+          `${preset.serving_description}；估算 ${nutrition.energy_kcal} kcal，` +
+          `蛋白质 ${nutrition.protein_g} g，脂肪 ${nutrition.fat_g} g，` +
+          `碳水 ${nutrition.carbohydrate_g} g，纤维 ${nutrition.fiber_g} g，` +
+          `钠 ${nutrition.sodium_mg} mg，添加糖 ${nutrition.added_sugar_g} g。`;
+      }
+
       // 页面加载时读取少量模拟菜品，让用户确认测试数据已经正确接入。
       async function loadMenuPreview() {
         try {
-          // 页面只渲染前八条，完整 44 条模拟数据仍可通过 /menu-items 查询。
+          // 页面只渲染前八条，完整 160 条模拟数据仍可通过 /menu-items 查询。
           const response = await fetch("/menu-items?limit=8");
           const items = await response.json();
 
@@ -377,6 +427,8 @@
 
       // 注册按钮点击事件，并在页面脚本加载完成后立即获取模拟菜单预览。
       calculateButton.addEventListener("click", calculateNutrition);
+      breakfastPreset.addEventListener("change", renderBreakfastDetails);
+      loadBreakfastPresets();
       loadMenuPreview();
     </script>
   </body>

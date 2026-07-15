@@ -13,13 +13,14 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse
 
 # 菜单模块负责模拟数据读取，营养模块负责身体信息校验和营养公式计算。
+from .breakfast import BreakfastPresetError, get_breakfast_preset, list_breakfast_presets
 from .menu_catalog import MenuCatalog
 from .nutrition import NutritionInputError, NutritionRequest, calculate_daily_nutrition
 from .recommendation import RecommendationError, recommend_takeaway_plans
 
 
 # 创建 Web 应用实例；标题和版本会显示在 /docs 自动接口文档中。
-app = FastAPI(title="Nutrition Analysis Service", version="1.1.0")
+app = FastAPI(title="Nutrition Analysis Service", version="1.5.0")
 
 # 默认读取项目内置的模拟菜单。部署或测试时可通过环境变量替换数据文件，
 # 从而不必修改源代码即可使用另一份相同结构的 JSON。
@@ -69,16 +70,24 @@ def recommendations(payload: dict[str, Any]) -> dict[str, Any]:
 
     try:
         request = NutritionRequest.from_dict(payload)
-        breakfast_ratio = float(payload.get("breakfast_ratio", 0.25))
+        breakfast = get_breakfast_preset(str(payload.get("breakfast_id", "none")))
         nutrition_analysis = calculate_daily_nutrition(request)
         recommendation = recommend_takeaway_plans(
             menu_catalog.load(),
             nutrition_analysis,
-            breakfast_ratio=breakfast_ratio,
+            breakfast=breakfast,
         )
-    except (NutritionInputError, RecommendationError, TypeError, ValueError) as exc:
+    except (BreakfastPresetError, NutritionInputError, RecommendationError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return {"nutrition": nutrition_analysis, "recommendation": recommendation}
+
+
+# 早餐组合接口供页面生成下拉选项，所有数值都是每份经典搭配的工程估算。
+@app.get("/breakfast-presets")
+def breakfast_presets() -> list[dict[str, Any]]:
+    """返回可选择的经典早餐组合及估算营养值。"""
+
+    return list_breakfast_presets()
 
 
 # 模拟菜单查询接口支持按平台、分类、最高价格和返回数量筛选。
