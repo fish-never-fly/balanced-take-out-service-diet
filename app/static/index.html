@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>每日营养需求分析</title>
+    <style>
+      :root {
+        --bg: #f4f7f1;
+        --card: rgba(255, 255, 255, 0.9);
+        --ink: #203126;
+        --muted: #68756c;
+        --accent: #2f7d4a;
+        --accent-dark: #205f36;
+        --line: rgba(32, 49, 38, 0.13);
+        --warning: #8a5417;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 10% 0%, rgba(102, 187, 106, 0.22), transparent 30%),
+          radial-gradient(circle at 95% 90%, rgba(255, 193, 7, 0.13), transparent 32%),
+          var(--bg);
+      }
+
+      .shell {
+        width: min(1080px, calc(100% - 32px));
+        margin: 32px auto 56px;
+        display: grid;
+        gap: 20px;
+      }
+
+      .hero, .panel {
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: var(--card);
+        box-shadow: 0 18px 55px rgba(32, 49, 38, 0.08);
+        backdrop-filter: blur(12px);
+      }
+
+      .hero, .panel { padding: 26px; }
+
+      h1, h2 { margin: 0; }
+      h1 { font-size: clamp(2rem, 5vw, 3.4rem); letter-spacing: -0.04em; }
+      h2 { margin-bottom: 8px; }
+
+      p { margin: 10px 0 0; color: var(--muted); line-height: 1.65; }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 14px;
+      }
+
+      label { display: grid; gap: 8px; font-size: 0.95rem; }
+
+      input, select, button {
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        font: inherit;
+      }
+
+      input, select { background: white; color: var(--ink); }
+
+      .choices { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+
+      .choice {
+        display: inline-flex;
+        grid-auto-flow: column;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 13px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: white;
+      }
+
+      button {
+        margin-top: 18px;
+        color: white;
+        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button:disabled { opacity: 0.6; cursor: wait; }
+
+      .status { min-height: 24px; margin-top: 14px; color: var(--warning); font-weight: 600; }
+
+      .metrics, .menu-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .metric, .menu-item {
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: white;
+      }
+
+      .metric strong { display: block; margin-top: 5px; font-size: 1.18rem; }
+      .muted { color: var(--muted); }
+      .menu-item h3 { margin: 0 0 7px; font-size: 1rem; }
+      .menu-item p { margin: 4px 0 0; font-size: 0.9rem; }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <h1>每日营养需求分析</h1>
+        <p>根据成年人的身高、体重、年龄、性别和健康情况，估算每日营养摄入参考范围。</p>
+      </section>
+
+      <section class="panel">
+        <div class="grid">
+          <label>身高（厘米）<input id="height" type="number" min="100" max="250" step="0.1" value="170" /></label>
+          <label>体重（千克）<input id="weight" type="number" min="25" max="300" step="0.1" value="65" /></label>
+          <label>年龄<input id="age" type="number" min="18" max="100" step="1" value="30" /></label>
+          <label>
+            性别
+            <select id="sex"><option value="female">女</option><option value="male">男</option></select>
+          </label>
+        </div>
+
+        <div class="choices">
+          <label class="choice"><input id="high-glucose" type="checkbox" />高血糖</label>
+          <label class="choice"><input id="high-lipids" type="checkbox" />高血脂</label>
+          <label class="choice"><input id="high-pressure" type="checkbox" />高血压</label>
+        </div>
+
+        <button id="calculate-button" type="button">计算每日营养需求</button>
+        <div id="status" class="status"></div>
+        <div id="metrics" class="metrics"></div>
+      </section>
+
+      <section class="panel">
+        <h2>模拟外卖数据</h2>
+        <p>以下数据仅用于后续推荐算法测试，不代表真实商家的检测结果。</p>
+        <div id="menu-grid" class="menu-grid"></div>
+      </section>
+    </main>
+
+    <script>
+      const calculateButton = document.getElementById("calculate-button");
+      const status = document.getElementById("status");
+      const metrics = document.getElementById("metrics");
+      const menuGrid = document.getElementById("menu-grid");
+
+      function rangeText(value, unit) {
+        return `${value.min}–${value.max} ${unit}`;
+      }
+
+      function renderMetrics(payload) {
+        const targets = payload.daily_targets;
+        const values = [
+          ["BMI", `${payload.body.bmi}（${payload.body.bmi_category}）`],
+          ["基础代谢", `${payload.body.basal_metabolic_rate_kcal} kcal`],
+          ["每日热量", rangeText(targets.energy_kcal, "kcal")],
+          ["蛋白质", rangeText(targets.protein_g, "g")],
+          ["脂肪", rangeText(targets.fat_g, "g")],
+          ["饱和脂肪上限", `${targets.saturated_fat_max_g} g`],
+          ["碳水化合物", rangeText(targets.carbohydrate_g, "g")],
+          ["膳食纤维", `${targets.dietary_fiber_g} g`],
+          ["饮水量", rangeText(targets.water_ml, "ml")],
+          ["钠上限", `${targets.sodium_max_mg} mg`],
+          ["添加糖上限", `${targets.added_sugar_max_g} g`],
+        ];
+        metrics.innerHTML = values.map(([label, value]) =>
+          `<div class="metric"><span class="muted">${label}</span><strong>${value}</strong></div>`
+        ).join("");
+      }
+
+      async function calculateNutrition() {
+        calculateButton.disabled = true;
+        status.textContent = "正在计算...";
+        metrics.innerHTML = "";
+        try {
+          const response = await fetch("/nutrition", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              height_cm: Number(document.getElementById("height").value),
+              weight_kg: Number(document.getElementById("weight").value),
+              age: Number(document.getElementById("age").value),
+              sex: document.getElementById("sex").value,
+              high_blood_glucose: document.getElementById("high-glucose").checked,
+              high_blood_lipids: document.getElementById("high-lipids").checked,
+              high_blood_pressure: document.getElementById("high-pressure").checked,
+            }),
+          });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.detail || "计算失败");
+          renderMetrics(payload);
+          status.textContent = "计算完成。结果为通用参考，不替代医生或营养师建议。";
+        } catch (error) {
+          status.textContent = error.message;
+        } finally {
+          calculateButton.disabled = false;
+        }
+      }
+
+      async function loadMenuPreview() {
+        try {
+          const response = await fetch("/menu-items?limit=8");
+          const items = await response.json();
+          menuGrid.innerHTML = items.map((item) => `
+            <article class="menu-item">
+              <h3>${item.dish_name}</h3>
+              <div class="muted">${item.store_name} · ¥${item.price_yuan}</div>
+              <p>${item.nutrition.energy_kcal} kcal · 蛋白质 ${item.nutrition.protein_g} g</p>
+            </article>
+          `).join("");
+        } catch (error) {
+          menuGrid.textContent = "模拟菜单加载失败。";
+        }
+      }
+
+      calculateButton.addEventListener("click", calculateNutrition);
+      loadMenuPreview();
+    </script>
+  </body>
+</html>

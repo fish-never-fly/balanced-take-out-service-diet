@@ -1,0 +1,2 @@
+"""Takeaway platform data importer."""
+
