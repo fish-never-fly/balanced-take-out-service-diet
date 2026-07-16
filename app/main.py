@@ -5,8 +5,10 @@
 """
 
 import os
+from datetime import datetime, time
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 # FastAPI 负责 HTTP 路由、参数校验和错误响应，HTMLResponse 用于返回首页文件。
 from fastapi import FastAPI, HTTPException, Query
@@ -15,13 +17,19 @@ from fastapi.responses import HTMLResponse
 # 菜单模块负责模拟数据读取，营养模块负责身体信息校验和营养公式计算。
 from .breakfast import BreakfastPresetError, get_breakfast_preset, list_breakfast_presets
 from .menu_catalog import MenuCatalog
-from .nearby import NearbyRequest, NearbyRequestError, platform_summary, simulate_nearby_stores
 from .nutrition import NutritionInputError, NutritionRequest, calculate_daily_nutrition
-from .recommendation import RecommendationError, recommend_takeaway_plans
+from .recommendation import (
+    RecommendationError,
+    recommend_dinner_plans,
+    recommend_takeaway_plans,
+)
 
 
 # 创建 Web 应用实例；标题和版本会显示在 /docs 自动接口文档中。
-app = FastAPI(title="Nutrition Analysis Service", version="2.0.0")
+app = FastAPI(title="Nutrition Analysis Service", version="1.9.0")
+
+APP_TIMEZONE = ZoneInfo("Asia/Shanghai")
+LUNCH_CUTOFF = time(14, 30)
 
 # 默认读取项目内置的模拟菜单。部署或测试时可通过环境变量替换数据文件，
 # 从而不必修改源代码即可使用另一份相同结构的 JSON。
@@ -50,6 +58,28 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+def build_time_context(now: datetime | None = None) -> dict[str, Any]:
+    """返回北京时间以及是否已经晚于 14:30。"""
+
+    current = now.astimezone(APP_TIMEZONE) if now else datetime.now(APP_TIMEZONE)
+    after_cutoff = current.time().replace(tzinfo=None) > LUNCH_CUTOFF
+    return {
+        "timezone": "Asia/Shanghai",
+        "iso_datetime": current.isoformat(timespec="seconds"),
+        "display_time": current.strftime("%Y-%m-%d %H:%M:%S"),
+        "cutoff_time": "14:30",
+        "is_after_lunch_cutoff": after_cutoff,
+        "recommendation_mode": "dinner_only" if after_cutoff else "two_meals",
+    }
+
+
+@app.get("/current-time")
+def current_time() -> dict[str, Any]:
+    """返回程序使用的当前北京时间和推荐模式。"""
+
+    return build_time_context()
+
+
 # 营养分析接口接收 JSON 身体信息，并返回统一结构的每日营养目标。
 @app.post("/nutrition")
 def nutrition(payload: dict[str, Any]) -> dict[str, Any]:
@@ -67,7 +97,7 @@ def nutrition(payload: dict[str, Any]) -> dict[str, Any]:
 # 推荐接口复用身体信息计算结果，并从全部模拟菜品中寻找两餐组合。
 @app.post("/recommendations")
 def recommendations(payload: dict[str, Any]) -> dict[str, Any]:
-    """返回营养分析结果以及午餐、晚餐外卖推荐组合。"""
+    """14:30 前推荐两餐，之后根据已吃午餐只推荐晚餐。"""
 
     try:
         request = NutritionRequest.from_dict(payload)
@@ -75,12 +105,36 @@ def recommendations(payload: dict[str, Any]) -> dict[str, Any]:
         raw_budget = payload.get("budget_yuan")
         budget_yuan = float(raw_budget) if raw_budget is not None else None
         nutrition_analysis = calculate_daily_nutrition(request)
-        recommendation = recommend_takeaway_plans(
-            menu_catalog.load(),
-            nutrition_analysis,
-            breakfast=breakfast,
-            budget_yuan=budget_yuan,
-        )
+        items = menu_catalog.load()
+        time_context = build_time_context()
+        requested_mode = str(payload.get("recommendation_mode", "")).strip()
+        if requested_mode and requested_mode not in {"two_meals", "dinner_only"}:
+            raise RecommendationError(
+                "recommendation_mode must be two_meals or dinner_only"
+            )
+        selected_mode = requested_mode or str(time_context["recommendation_mode"])
+        if selected_mode == "dinner_only":
+            lunch_item_id = str(payload.get("lunch_item_id", "")).strip()
+            lunch_item = next((item for item in items if item["id"] == lunch_item_id), None)
+            if lunch_item is None:
+                raise RecommendationError("仅晚餐模式必须选择已经吃过的午餐")
+            recommendation = recommend_dinner_plans(
+                items,
+                nutrition_analysis,
+                lunch_item=lunch_item,
+                breakfast=breakfast,
+                budget_yuan=budget_yuan,
+            )
+        else:
+            recommendation = recommend_takeaway_plans(
+                items,
+                nutrition_analysis,
+                breakfast=breakfast,
+                budget_yuan=budget_yuan,
+            )
+            recommendation["meal_mode"] = "two_meals"
+        time_context["selected_recommendation_mode"] = selected_mode
+        time_context["mode_source"] = "manual" if requested_mode else "automatic"
     except (
         BreakfastPresetError,
         NutritionInputError,
@@ -89,7 +143,11 @@ def recommendations(payload: dict[str, Any]) -> dict[str, Any]:
         ValueError,
     ) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    return {"nutrition": nutrition_analysis, "recommendation": recommendation}
+    return {
+        "time": time_context,
+        "nutrition": nutrition_analysis,
+        "recommendation": recommendation,
+    }
 
 
 # 早餐组合接口供页面生成下拉选项，所有数值都是每份经典搭配的工程估算。
@@ -98,26 +156,6 @@ def breakfast_presets() -> list[dict[str, Any]]:
     """返回可选择的经典早餐组合及估算营养值。"""
 
     return list_breakfast_presets()
-
-
-# 平台汇总接口用于确认当前模拟数据中三个平台的菜品和商家规模。
-@app.get("/platforms")
-def platforms() -> list[dict[str, Any]]:
-    """返回美团、饿了么和京东模拟数据统计。"""
-
-    return platform_summary(menu_catalog.load())
-
-
-# 根据浏览器提供的当前位置，生成多平台附近商家与菜品模拟结果。
-@app.post("/nearby-stores")
-def nearby_stores(payload: dict[str, Any]) -> dict[str, Any]:
-    """校验定位参数并返回当前位置附近的模拟商家。"""
-
-    try:
-        request = NearbyRequest.from_dict(payload)
-    except NearbyRequestError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-    return simulate_nearby_stores(menu_catalog.load(), request)
 
 
 # 模拟菜单查询接口支持按平台、分类、最高价格和返回数量筛选。

@@ -105,6 +105,25 @@ class PairCandidate:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class DinnerCandidate:
+    """保存已知早餐和午餐后的一道晚餐候选。"""
+
+    dinner: PreparedDish
+    daily_totals: tuple[float, ...]
+    score: float
+
+    def score_sort_key(self) -> tuple[float, float, str]:
+        """兜底结果按偏离、晚餐价格和 ID 稳定排序。"""
+
+        return self.score, float(self.dinner.source["price_yuan"]), self.dinner.source["id"]
+
+    def price_sort_key(self) -> tuple[float, str]:
+        """精确结果按晚餐价格和 ID 稳定排序。"""
+
+        return float(self.dinner.source["price_yuan"]), self.dinner.source["id"]
+
+
 def recommend_takeaway_plans(
     items: list[dict[str, Any]],
     nutrition_analysis: dict[str, Any],
@@ -262,6 +281,134 @@ def recommend_takeaway_plans(
         "evaluated_combinations": considered_combinations,
         "fully_scored_combinations": fully_scored_combinations,
         "pruned_combinations": pruned_combinations,
+        "exact_match_count": exact_match_count,
+        "returned_exact_count": sum(plan["is_exact_match"] for plan in plans),
+        "supplemented_count": supplemented_count,
+        "result_limit": MAX_EXACT_RESULTS,
+        "weights": {key: round(value, 6) for key, value in weights.items()},
+        "plans": plans,
+    }
+
+
+def recommend_dinner_plans(
+    items: list[dict[str, Any]],
+    nutrition_analysis: dict[str, Any],
+    lunch_item: dict[str, Any],
+    breakfast: dict[str, Any] | None = None,
+    budget_yuan: float | None = None,
+) -> dict[str, Any]:
+    """将早餐和已吃午餐计入全天摄入，只推荐晚餐菜品。"""
+
+    if budget_yuan is not None and (
+        not isinstance(budget_yuan, (int, float)) or budget_yuan <= 0
+    ):
+        raise RecommendationError("budget_yuan must be a positive number")
+    budget_limit = float(budget_yuan) if budget_yuan is not None else None
+
+    try:
+        daily_targets = nutrition_analysis["daily_targets"]
+        health_flags = nutrition_analysis["input"]["health_flags"]
+        lunch_prepared = _prepare_dish(lunch_item)
+    except KeyError as exc:
+        raise RecommendationError("nutrition analysis or lunch is missing required data") from exc
+
+    breakfast_data = breakfast or {
+        "id": "none",
+        "name": "未吃早餐",
+        "serving_description": "不计入任何早餐摄入",
+        "nutrition": {field: 0 for field in NUTRIENT_FIELDS},
+    }
+    _validate_breakfast(breakfast_data)
+    breakfast_vector = _nutrition_vector(breakfast_data["nutrition"])
+    consumed_vector = tuple(
+        breakfast_vector[index] + lunch_prepared.nutrients[index]
+        for index in range(len(NUTRIENT_FIELDS))
+    )
+
+    available_items = [
+        item
+        for item in items
+        if item["id"] != lunch_item["id"]
+        and _normalized_dish_name(item["dish_name"]) != lunch_prepared.normalized_name
+    ]
+    same_name_items_skipped = len(items) - len(available_items)
+    candidate_items, filter_report = filter_similar_dishes(available_items)
+    if not candidate_items:
+        raise RecommendationError("no dinner candidates remain after filtering")
+
+    weights = _build_weights(health_flags)
+    weight_vector = tuple(weights[field] for field in NUTRIENT_FIELDS)
+    exact_candidates: list[DinnerCandidate] = []
+    closest_candidates: list[DinnerCandidate] = []
+    exact_match_count = 0
+    over_budget_items_skipped = 0
+    evaluated_candidates = 0
+
+    for dinner in (_prepare_dish(item) for item in candidate_items):
+        dinner_price = float(dinner.source["price_yuan"])
+        if budget_limit is not None and dinner_price > budget_limit:
+            over_budget_items_skipped += 1
+            continue
+
+        evaluated_candidates += 1
+        daily_totals = tuple(
+            consumed_vector[index] + dinner.nutrients[index]
+            for index in range(len(NUTRIENT_FIELDS))
+        )
+        score = _score_vector(daily_totals, daily_targets, weight_vector)
+        candidate = DinnerCandidate(dinner=dinner, daily_totals=daily_totals, score=score)
+        if score <= 1e-12:
+            exact_match_count += 1
+            exact_candidates.append(candidate)
+            exact_candidates.sort(key=DinnerCandidate.price_sort_key)
+            del exact_candidates[MAX_EXACT_RESULTS:]
+        else:
+            closest_candidates.append(candidate)
+            closest_candidates.sort(key=DinnerCandidate.score_sort_key)
+            del closest_candidates[MIN_RECOMMENDATION_RESULTS:]
+
+    if evaluated_candidates == 0:
+        if budget_limit is not None and over_budget_items_skipped > 0:
+            raise RecommendationError("no dinner candidates fit within the budget")
+        raise RecommendationError("no valid dinner candidates remain after filtering")
+
+    sorted_exact = sorted(exact_candidates, key=DinnerCandidate.price_sort_key)
+    sorted_closest = sorted(closest_candidates, key=DinnerCandidate.score_sort_key)
+    if exact_match_count >= MIN_RECOMMENDATION_RESULTS:
+        selected = sorted_exact[:MAX_EXACT_RESULTS]
+        mode = "exact"
+        message = "找到满足全天营养条件的晚餐，最多展示价格最低的十种。"
+        supplemented_count = 0
+    elif exact_match_count > 0:
+        supplemented_count = min(
+            MIN_RECOMMENDATION_RESULTS - len(sorted_exact),
+            len(sorted_closest),
+        )
+        selected = sorted_exact + sorted_closest[:supplemented_count]
+        mode = "mixed"
+        message = "满足条件的晚餐不足三种，已用偏离程度最小的晚餐补足。"
+    else:
+        selected = sorted_closest[:MIN_RECOMMENDATION_RESULTS]
+        mode = "closest"
+        message = "没有晚餐完全满足全天目标，以下为偏离程度最小的三种选择。"
+        supplemented_count = len(selected)
+
+    plans = [
+        _dinner_candidate_to_plan(candidate, daily_targets, weights)
+        for candidate in selected
+    ]
+    return {
+        "meal_mode": "dinner_only",
+        "mode": mode,
+        "message": message,
+        "breakfast": breakfast_data,
+        "lunch": _item_summary(lunch_item),
+        "consumed_nutrition_totals": _vector_to_dict(consumed_vector),
+        "budget_yuan": budget_limit,
+        "candidate_filter": filter_report,
+        "same_name_items_skipped": same_name_items_skipped,
+        "over_budget_items_skipped": over_budget_items_skipped,
+        "evaluated_candidates": evaluated_candidates,
         "exact_match_count": exact_match_count,
         "returned_exact_count": sum(plan["is_exact_match"] for plan in plans),
         "supplemented_count": supplemented_count,
@@ -504,6 +651,25 @@ def _candidate_to_plan(
         "daily_nutrition_totals": daily_totals,
         "deviation_score": round(candidate.score, 6),
         "deviations": deviations,
+        "is_exact_match": candidate.score <= 1e-12,
+    }
+
+
+def _dinner_candidate_to_plan(
+    candidate: DinnerCandidate,
+    daily_targets: dict[str, Any],
+    weights: dict[str, float],
+) -> dict[str, Any]:
+    """把晚餐候选转换为页面需要的营养与偏离详情。"""
+
+    daily_totals = _vector_to_dict(candidate.daily_totals)
+    return {
+        "dinner": _item_summary(candidate.dinner.source),
+        "dinner_price_yuan": round(float(candidate.dinner.source["price_yuan"]), 2),
+        "dinner_nutrition": _vector_to_dict(candidate.dinner.nutrients),
+        "daily_nutrition_totals": daily_totals,
+        "deviation_score": round(candidate.score, 6),
+        "deviations": _evaluate_deviations(daily_totals, daily_targets, weights),
         "is_exact_match": candidate.score <= 1e-12,
     }
 

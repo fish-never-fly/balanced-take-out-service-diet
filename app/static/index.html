@@ -105,15 +105,15 @@
       /* 状态区域用于显示计算进度、成功提示和错误信息。 */
       .status { min-height: 24px; margin-top: 14px; color: var(--warning); font-weight: 600; }
 
-      /* 营养指标和模拟菜单都使用响应式卡片网格。 */
-      .metrics, .menu-grid {
+      /* 营养指标使用响应式卡片网格。 */
+      .metrics {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 12px;
         margin-top: 16px;
       }
 
-      .metric, .menu-item {
+      .metric {
         padding: 15px;
         border: 1px solid var(--line);
         border-radius: 16px;
@@ -122,15 +122,6 @@
 
       .metric strong { display: block; margin-top: 5px; font-size: 1.18rem; }
       .muted { color: var(--muted); }
-      .menu-item h3 { margin: 0 0 7px; font-size: 1rem; }
-      .menu-item p { margin: 4px 0 0; font-size: 0.9rem; }
-
-      /* 附近模拟商家采用纵向卡片，商家内部菜品使用紧凑的响应式网格。 */
-      .nearby-results { display: grid; gap: 14px; margin-top: 16px; }
-      .nearby-store { padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: white; }
-      .nearby-store-header { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
-      .nearby-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 12px; }
-      .nearby-item { padding: 10px; border-radius: 12px; background: var(--bg); }
 
       /* 推荐方案纵向排列，每张卡片展示两餐、总价格、营养合计和偏离信息。 */
       .recommendations { display: grid; gap: 14px; margin-top: 16px; }
@@ -160,6 +151,13 @@
       .meal strong { display: block; margin-top: 4px; }
       .plan-details { margin-top: 12px; color: var(--muted); line-height: 1.7; }
       .breakfast-note { margin-top: 10px; color: var(--muted); font-size: 0.92rem; }
+      .time-banner { margin-bottom: 16px; padding: 12px 14px; border-left: 4px solid var(--accent); background: white; }
+      .time-banner strong { display: block; margin-bottom: 3px; }
+      .mode-switch { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 16px; }
+      .mode-button { margin: 0; color: var(--accent-dark); background: white; }
+      .mode-button.active { color: white; background: linear-gradient(135deg, var(--accent), var(--accent-dark)); }
+      .lunch-selection { margin-top: 16px; padding: 16px; border: 1px solid var(--line); background: white; }
+      .lunch-selection[hidden] { display: none; }
     </style>
   </head>
   <body>
@@ -172,6 +170,14 @@
 
       <!-- 身体信息输入区：五个基础字段和三个可选健康标记组成完整请求。 -->
       <section class="panel">
+        <div class="time-banner">
+          <strong id="current-time">正在获取当前北京时间...</strong>
+          <span id="time-mode" class="muted">正在判断推荐模式。</span>
+        </div>
+        <div class="mode-switch" aria-label="推荐模式切换">
+          <button id="two-meals-mode" class="mode-button active" type="button">午餐＋晚餐模式</button>
+          <button id="dinner-only-mode" class="mode-button" type="button">仅晚餐模式</button>
+        </div>
         <div class="grid">
           <!-- 数值范围与后端 NutritionRequest 的校验边界保持一致。 -->
           <label>身高（厘米）<input id="height" type="number" min="100" max="250" step="0.1" value="170" /></label>
@@ -195,12 +201,23 @@
               <option value="none">正在加载早餐组合...</option>
             </select>
           </label>
-          <label>
-            午餐与晚餐预算上限（元）
+          <label id="budget-label">
+            <span id="budget-label-text">午餐与晚餐预算上限（元）</span>
             <input id="budget" type="number" min="1" step="0.1" value="80" />
           </label>
         </div>
         <p id="breakfast-details" class="breakfast-note">早餐营养值将用于计算全天摄入。</p>
+
+        <div id="lunch-selection" class="lunch-selection" hidden>
+          <label>
+            搜索已经吃过的午餐
+            <input id="lunch-search" type="search" placeholder="输入菜名或商家名称" />
+          </label>
+          <label style="margin-top: 12px;">
+            选择午餐
+            <select id="lunch-item"><option value="">正在加载菜品...</option></select>
+          </label>
+        </div>
 
         <!-- 三高复选框默认不选中，勾选后会收紧对应营养物质的建议上限。 -->
         <div class="choices">
@@ -217,37 +234,11 @@
 
       <!-- 推荐结果区：精确匹配时展示全部组合，否则展示加权偏离最小的三组。 -->
       <section class="panel">
-        <h2>午餐与晚餐推荐</h2>
+        <h2 id="recommendation-title">午餐与晚餐推荐</h2>
         <p id="recommendation-summary">填写身体信息并计算后生成两餐外卖方案。</p>
         <div id="recommendations" class="recommendations"></div>
       </section>
 
-      <section class="panel">
-        <!-- 模拟菜单预览区：只展示前八条，完整数据可通过 /menu-items 获取。 -->
-        <h2>模拟外卖数据</h2>
-        <p>以下数据仅用于后续推荐算法测试，不代表真实商家的检测结果。</p>
-        <div id="menu-grid" class="menu-grid"></div>
-      </section>
-
-      <!-- 浏览器定位区：使用用户授权坐标生成附近多平台模拟商家。 -->
-      <section class="panel">
-        <h2>当前位置附近的模拟商家</h2>
-        <p>定位仅用于本次模拟查询；返回位置、配送费和商家距离均为模拟数据。</p>
-        <div class="grid" style="margin-top: 16px;">
-          <label>
-            搜索半径（米）
-            <input id="nearby-radius" type="number" min="100" max="20000" step="100" value="3000" />
-          </label>
-        </div>
-        <div class="choices">
-          <label class="choice"><input class="nearby-platform" type="checkbox" value="meituan" checked />美团</label>
-          <label class="choice"><input class="nearby-platform" type="checkbox" value="eleme" checked />饿了么</label>
-          <label class="choice"><input class="nearby-platform" type="checkbox" value="jd" checked />京东</label>
-        </div>
-        <button id="locate-button" type="button">获取当前位置并模拟附近商家</button>
-        <div id="nearby-status" class="status"></div>
-        <div id="nearby-results" class="nearby-results"></div>
-      </section>
     </main>
 
     <script>
@@ -257,13 +248,21 @@
       const metrics = document.getElementById("metrics");
       const recommendationSummary = document.getElementById("recommendation-summary");
       const recommendations = document.getElementById("recommendations");
-      const menuGrid = document.getElementById("menu-grid");
       const breakfastPreset = document.getElementById("breakfast-preset");
       const breakfastDetails = document.getElementById("breakfast-details");
-      const locateButton = document.getElementById("locate-button");
-      const nearbyStatus = document.getElementById("nearby-status");
-      const nearbyResults = document.getElementById("nearby-results");
+      const currentTime = document.getElementById("current-time");
+      const timeMode = document.getElementById("time-mode");
+      const lunchSelection = document.getElementById("lunch-selection");
+      const lunchSearch = document.getElementById("lunch-search");
+      const lunchItem = document.getElementById("lunch-item");
+      const budgetLabelText = document.getElementById("budget-label-text");
+      const recommendationTitle = document.getElementById("recommendation-title");
+      const twoMealsModeButton = document.getElementById("two-meals-mode");
+      const dinnerOnlyModeButton = document.getElementById("dinner-only-mode");
       let breakfastPresets = [];
+      let menuItems = [];
+      let dinnerOnlyMode = false;
+      let manualRecommendationMode = null;
 
       // 把后端返回的 {min, max} 区间转换为适合页面显示的文本。
       function rangeText(value, unit) {
@@ -311,6 +310,11 @@
           sodium_mg: "钠",
           added_sugar_g: "添加糖",
         };
+
+        if (result.meal_mode === "dinner_only") {
+          renderDinnerRecommendations(result, nutrientLabels);
+          return;
+        }
 
         const filter = result.candidate_filter;
         recommendationSummary.textContent =
@@ -370,14 +374,71 @@
         }).join("");
       }
 
+      // 14:30 后只展示已吃午餐和候选晚餐，全天总量包含早餐、午餐与晚餐。
+      function renderDinnerRecommendations(result, nutrientLabels) {
+        const filter = result.candidate_filter;
+        recommendationSummary.textContent =
+          `已吃午餐“${result.lunch.dish_name}”，早餐采用“${result.breakfast.name}”。` +
+          `从 ${filter.original_count} 道晚餐候选中保留 ${filter.retained_count} 道，` +
+          `删除 ${filter.removed_count} 道营养相近的较贵菜。` +
+          `晚餐预算上限 ¥${result.budget_yuan.toFixed(2)}，排除 ${result.over_budget_items_skipped} 道超预算菜品。` +
+          `${result.message} 满足条件共 ${result.exact_match_count} 道，本次展示精确方案 ` +
+          `${result.returned_exact_count} 道，补充方案 ${result.supplemented_count} 道。`;
+
+        recommendations.innerHTML = result.plans.map((plan, index) => {
+          const mainDeviations = Object.entries(plan.deviations)
+            .filter(([, entry]) => entry.weighted_deviation > 0)
+            .sort((left, right) => right[1].weighted_deviation - left[1].weighted_deviation)
+            .slice(0, 3)
+            .map(([key, entry]) =>
+              `${nutrientLabels[key]}偏离 ${(entry.deviation_ratio * 100).toFixed(1)}%`
+            )
+            .join("；");
+          const dinnerNutrition = plan.dinner_nutrition;
+          const dailyTotals = plan.daily_nutrition_totals;
+          return `
+            <article class="plan">
+              <div class="plan-header">
+                <strong>晚餐方案 ${index + 1}</strong>
+                <strong>¥${plan.dinner_price_yuan.toFixed(2)}</strong>
+              </div>
+              <div class="meal">
+                <span class="muted">${plan.dinner.store_name}</span>
+                <strong>${plan.dinner.dish_name}</strong>
+                <span class="muted">
+                  ${dinnerNutrition.energy_kcal} kcal · 蛋白质 ${dinnerNutrition.protein_g} g ·
+                  脂肪 ${dinnerNutrition.fat_g} g · 碳水 ${dinnerNutrition.carbohydrate_g} g
+                </span>
+              </div>
+              <div class="plan-details">
+                含早餐和午餐的全天摄入：${dailyTotals.energy_kcal} kcal，
+                蛋白质 ${dailyTotals.protein_g} g，脂肪 ${dailyTotals.fat_g} g，
+                碳水 ${dailyTotals.carbohydrate_g} g，纤维 ${dailyTotals.fiber_g} g，
+                钠 ${dailyTotals.sodium_mg} mg，添加糖 ${dailyTotals.added_sugar_g} g。<br />
+                ${plan.is_exact_match
+                  ? "完全满足当前全天营养条件。"
+                  : `加权偏离系数：${plan.deviation_score.toFixed(4)}。主要偏离：${mainDeviations}`}
+              </div>
+            </article>
+          `;
+        }).join("");
+      }
+
       // 读取表单、发送营养与推荐请求，并负责请求期间的按钮和状态变化。
       async function calculateNutrition() {
+        if (dinnerOnlyMode && !lunchItem.value) {
+          status.textContent = "仅晚餐模式下，请先选择已经吃过的午餐。";
+          lunchItem.focus();
+          return;
+        }
         // 禁用按钮可避免用户快速重复提交；同时清空上一次结果。
         calculateButton.disabled = true;
         status.textContent = "正在计算...";
         metrics.innerHTML = "";
         recommendations.innerHTML = "";
-        recommendationSummary.textContent = "正在评估午餐和晚餐组合...";
+        recommendationSummary.textContent = dinnerOnlyMode
+          ? "正在根据早餐和已吃午餐评估晚餐..."
+          : "正在评估午餐和晚餐组合...";
         try {
           // /recommendations 同时返回营养分析和外卖组合，避免前端自行复制评分算法。
           const response = await fetch("/recommendations", {
@@ -395,6 +456,8 @@
               high_blood_glucose: document.getElementById("high-glucose").checked,
               high_blood_lipids: document.getElementById("high-lipids").checked,
               high_blood_pressure: document.getElementById("high-pressure").checked,
+              lunch_item_id: dinnerOnlyMode ? lunchItem.value : null,
+              recommendation_mode: dinnerOnlyMode ? "dinner_only" : "two_meals",
             }),
           });
 
@@ -402,6 +465,7 @@
           const payload = await response.json();
           if (!response.ok) throw new Error(payload.detail || "计算失败");
           renderMetrics(payload.nutrition);
+          applyTimeMode(payload.time);
           renderRecommendations(payload.recommendation);
           status.textContent = "计算完成。结果为通用参考，不替代医生或营养师建议。";
         } catch (error) {
@@ -444,118 +508,114 @@
           `钠 ${nutrition.sodium_mg} mg，添加糖 ${nutrition.added_sugar_g} g。`;
       }
 
-      // 页面加载时读取少量模拟菜品，让用户确认测试数据已经正确接入。
-      async function loadMenuPreview() {
+      // 一次读取完整模拟菜单，供仅晚餐模式搜索和选择已经吃过的午餐。
+      async function loadMenuItems() {
         try {
-          // 页面只渲染前八条，完整 420 条模拟数据仍可通过 /menu-items 查询。
-          const response = await fetch("/menu-items?limit=8");
-          const items = await response.json();
-
-          // 每张卡片显示菜名、商家、价格、热量和蛋白质，其他营养值保留在接口数据中。
-          menuGrid.innerHTML = items.map((item) => `
-            <article class="menu-item">
-              <h3>${item.dish_name}</h3>
-              <div class="muted">${item.store_name} · ¥${item.price_yuan}</div>
-              <p>${item.nutrition.energy_kcal} kcal · 蛋白质 ${item.nutrition.protein_g} g</p>
-            </article>
-          `).join("");
+          const response = await fetch("/menu-items?limit=1000");
+          menuItems = await response.json();
+          renderLunchOptions("");
         } catch (error) {
-          // 菜单预览失败不影响身体营养分析功能，只在当前区域显示提示。
-          menuGrid.textContent = "模拟菜单加载失败。";
+          lunchItem.innerHTML = '<option value="">菜品加载失败</option>';
         }
       }
 
-      // 读取附近商家平台复选框，至少应选择一个平台。
-      function selectedNearbyPlatforms() {
-        return [...document.querySelectorAll(".nearby-platform:checked")]
-          .map((node) => node.value);
+      // 根据菜名或商家名称过滤午餐下拉框，保留已经选择的菜品 ID。
+      function renderLunchOptions(searchText) {
+        const selectedId = lunchItem.value;
+        const keyword = searchText.trim().toLocaleLowerCase("zh-CN");
+        const filtered = menuItems.filter((item) =>
+          !keyword || `${item.dish_name} ${item.store_name}`.toLocaleLowerCase("zh-CN").includes(keyword)
+        );
+        lunchItem.innerHTML = [
+          '<option value="">请选择已经吃过的午餐</option>',
+          ...filtered.slice(0, 200).map((item) =>
+            `<option value="${item.id}">${item.dish_name} · ${item.store_name} · ¥${item.price_yuan}</option>`
+          ),
+        ].join("");
+        if (filtered.some((item) => item.id === selectedId)) lunchItem.value = selectedId;
       }
 
-      // 将浏览器回调形式的定位接口包装为 Promise，便于在 async 函数中使用。
-      function currentPosition() {
-        return new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 60000,
-          });
-        });
-      }
-
-      // 请求当前位置并调用附近模拟接口，整个过程不会连接真实外卖平台。
-      async function locateAndLoadNearby() {
-        const platforms = selectedNearbyPlatforms();
-        if (!platforms.length) {
-          nearbyStatus.textContent = "请至少选择一个平台。";
-          return;
+      // 更新推荐模式对应的表单、标题、按钮状态和说明文字。
+      function setRecommendationMode(mode, manual = false) {
+        const nextDinnerOnlyMode = mode === "dinner_only";
+        const modeChanged = dinnerOnlyMode !== nextDinnerOnlyMode;
+        dinnerOnlyMode = nextDinnerOnlyMode;
+        if (manual) manualRecommendationMode = mode;
+        twoMealsModeButton.classList.toggle("active", !dinnerOnlyMode);
+        dinnerOnlyModeButton.classList.toggle("active", dinnerOnlyMode);
+        twoMealsModeButton.setAttribute("aria-pressed", String(!dinnerOnlyMode));
+        dinnerOnlyModeButton.setAttribute("aria-pressed", String(dinnerOnlyMode));
+        if (modeChanged) {
+          recommendations.innerHTML = "";
+          metrics.innerHTML = "";
+          status.textContent = "";
         }
-        if (!navigator.geolocation) {
-          nearbyStatus.textContent = "当前浏览器不支持定位功能。";
-          return;
-        }
-
-        locateButton.disabled = true;
-        nearbyStatus.textContent = "正在获取当前位置...";
-        nearbyResults.innerHTML = "";
-        try {
-          const position = await currentPosition();
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-          nearbyStatus.textContent = "定位成功，正在生成附近模拟商家...";
-
-          const response = await fetch("/nearby-stores", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              latitude,
-              longitude,
-              radius_m: Number(document.getElementById("nearby-radius").value),
-              platforms,
-              store_limit: 30,
-              items_per_store: 6,
-            }),
-          });
-          const payload = await response.json();
-          if (!response.ok) throw new Error(payload.detail || "附近商家查询失败");
-
-          nearbyStatus.textContent =
-            `当前位置 ${latitude.toFixed(5)}, ${longitude.toFixed(5)}；` +
-            `找到 ${payload.matched_store_count} 家，展示 ${payload.returned_store_count} 家。`;
-          if (!payload.stores.length) {
-            nearbyResults.innerHTML = '<div class="muted">当前半径内没有模拟商家，请扩大搜索范围。</div>';
-            return;
+        if (dinnerOnlyMode) {
+          lunchSelection.hidden = false;
+          budgetLabelText.textContent = "晚餐预算上限（元）";
+          recommendationTitle.textContent = "晚餐推荐";
+          if (!recommendations.children.length) {
+            recommendationSummary.textContent = "选择已经吃过的午餐后生成晚餐方案。";
           }
+          calculateButton.textContent = "根据已吃午餐推荐晚餐";
+        } else {
+          timeMode.textContent = "尚未晚于 14:30，系统将同时推荐午餐和晚餐。";
+          lunchSelection.hidden = true;
+          budgetLabelText.textContent = "午餐与晚餐预算上限（元）";
+          recommendationTitle.textContent = "午餐与晚餐推荐";
+          if (!recommendations.children.length) {
+            recommendationSummary.textContent = "填写身体信息并计算后生成两餐外卖方案。";
+          }
+          calculateButton.textContent = "计算每日营养需求";
+        }
+      }
 
-          nearbyResults.innerHTML = payload.stores.map((store) => `
-            <article class="nearby-store">
-              <div class="nearby-store-header">
-                <strong>${store.store_name}</strong>
-                <span class="muted">${store.platform} · ${store.distance_m} m</span>
-              </div>
-              <p>配送费 ¥${store.delivery_fee_yuan} · 起送 ¥${store.minimum_order_yuan}</p>
-              <div class="nearby-items">
-                ${store.items.map((item) => `
-                  <div class="nearby-item">
-                    <strong>${item.dish_name}</strong>
-                    <div class="muted">¥${item.price_yuan} · ${item.nutrition.energy_kcal} kcal</div>
-                  </div>
-                `).join("")}
-              </div>
-            </article>
-          `).join("");
+      // 时间模式只作为默认值；用户点击切换按钮后，时间刷新不会覆盖手动选择。
+      function applyTimeMode(timePayload) {
+        currentTime.textContent = `当前北京时间：${timePayload.display_time}`;
+        const automaticMode = timePayload.is_after_lunch_cutoff ? "dinner_only" : "two_meals";
+        if (manualRecommendationMode === null) {
+          setRecommendationMode(automaticMode);
+          timeMode.textContent = timePayload.is_after_lunch_cutoff
+            ? "已晚于 14:30，默认使用仅晚餐模式；也可以手动切换。"
+            : "尚未晚于 14:30，默认使用午餐＋晚餐模式；也可以手动切换。";
+        } else {
+          const manualLabel = manualRecommendationMode === "dinner_only" ? "仅晚餐" : "午餐＋晚餐";
+          const automaticLabel = automaticMode === "dinner_only" ? "仅晚餐" : "午餐＋晚餐";
+          timeMode.textContent = `当前已手动选择“${manualLabel}”模式；按时间自动建议为“${automaticLabel}”。`;
+        }
+      }
+
+      // 时间由后端统一按 Asia/Shanghai 时区提供，页面每分钟刷新一次模式。
+      async function loadCurrentTime() {
+        try {
+          const response = await fetch("/current-time");
+          const payload = await response.json();
+          if (!response.ok) throw new Error("时间获取失败");
+          applyTimeMode(payload);
         } catch (error) {
-          nearbyStatus.textContent = error.message || "无法获取当前位置。";
-        } finally {
-          locateButton.disabled = false;
+          currentTime.textContent = "当前时间获取失败";
+          timeMode.textContent = "时间获取失败，可使用下方按钮手动选择推荐模式。";
+          if (manualRecommendationMode === null) setRecommendationMode("two_meals");
         }
       }
 
       // 注册按钮点击事件，并在页面脚本加载完成后立即获取模拟菜单预览。
       calculateButton.addEventListener("click", calculateNutrition);
       breakfastPreset.addEventListener("change", renderBreakfastDetails);
-      locateButton.addEventListener("click", locateAndLoadNearby);
+      lunchSearch.addEventListener("input", () => renderLunchOptions(lunchSearch.value));
+      twoMealsModeButton.addEventListener("click", () => {
+        setRecommendationMode("two_meals", true);
+        timeMode.textContent = "当前已手动选择“午餐＋晚餐”模式。";
+      });
+      dinnerOnlyModeButton.addEventListener("click", () => {
+        setRecommendationMode("dinner_only", true);
+        timeMode.textContent = "当前已手动选择“仅晚餐”模式。";
+      });
       loadBreakfastPresets();
-      loadMenuPreview();
+      loadMenuItems();
+      loadCurrentTime();
+      setInterval(loadCurrentTime, 60000);
     </script>
   </body>
 </html>

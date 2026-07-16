@@ -3,15 +3,21 @@
 import unittest
 from collections import defaultdict
 from copy import deepcopy
+from datetime import datetime
 from pathlib import Path
+from unittest.mock import patch
+from zoneinfo import ZoneInfo
+
+from fastapi import HTTPException
 
 from app.breakfast import get_breakfast_preset, list_breakfast_presets
+from app.main import build_time_context, recommendations as api_recommendations
 from app.menu_catalog import MenuCatalog
-from app.nearby import NearbyRequest, NearbyRequestError, platform_summary, simulate_nearby_stores
 from app.nutrition import NutritionInputError, NutritionRequest, calculate_daily_nutrition
 from app.recommendation import (
     RecommendationError,
     filter_similar_dishes,
+    recommend_dinner_plans,
     recommend_takeaway_plans,
 )
 
@@ -161,48 +167,18 @@ class MenuCatalogTest(unittest.TestCase):
         self.assertIs(first, second)
 
 
-class NearbySimulationTest(unittest.TestCase):
-    """验证多平台汇总和当前位置附近商家模拟。"""
+class TimeModeTest(unittest.TestCase):
+    """验证北京时间和 14:30 推荐模式边界。"""
 
-    def setUp(self) -> None:
-        file_path = Path(__file__).resolve().parent.parent / "examples" / "nutrition_menu.json"
-        self.items = MenuCatalog(file_path).load()
+    def test_cutoff_switches_only_after_1430(self) -> None:
+        timezone = ZoneInfo("Asia/Shanghai")
+        at_cutoff = build_time_context(datetime(2026, 7, 16, 14, 30, tzinfo=timezone))
+        after_cutoff = build_time_context(datetime(2026, 7, 16, 14, 30, 1, tzinfo=timezone))
 
-    def test_platform_summary_covers_all_items(self) -> None:
-        summary = platform_summary(self.items)
-
-        self.assertEqual({entry["platform"] for entry in summary}, {"meituan", "eleme", "jd"})
-        self.assertEqual(sum(entry["item_count"] for entry in summary), 420)
-        self.assertTrue(all(entry["store_count"] > 0 for entry in summary))
-
-    def test_nearby_results_respect_radius_and_platform(self) -> None:
-        request = NearbyRequest(
-            latitude=31.2304,
-            longitude=121.4737,
-            radius_m=3000,
-            platforms=("meituan",),
-            store_limit=20,
-            items_per_store=5,
-        )
-        result = simulate_nearby_stores(self.items, request)
-
-        self.assertEqual(result["source"], "simulated-nearby")
-        self.assertTrue(result["stores"])
-        self.assertTrue(all(store["platform"] == "meituan" for store in result["stores"]))
-        self.assertTrue(all(store["distance_m"] <= 3000 for store in result["stores"]))
-        self.assertTrue(all(len(store["items"]) <= 5 for store in result["stores"]))
-
-    def test_nearby_results_are_deterministic(self) -> None:
-        request = NearbyRequest(latitude=39.9042, longitude=116.4074, radius_m=5000)
-
-        first = simulate_nearby_stores(self.items, request)
-        second = simulate_nearby_stores(self.items, request)
-
-        self.assertEqual(first, second)
-
-    def test_rejects_invalid_location(self) -> None:
-        with self.assertRaises(NearbyRequestError):
-            NearbyRequest(latitude=100, longitude=116.4)
+        self.assertFalse(at_cutoff["is_after_lunch_cutoff"])
+        self.assertEqual(at_cutoff["recommendation_mode"], "two_meals")
+        self.assertTrue(after_cutoff["is_after_lunch_cutoff"])
+        self.assertEqual(after_cutoff["recommendation_mode"], "dinner_only")
 
 
 class RecommendationTest(unittest.TestCase):
@@ -319,6 +295,106 @@ class RecommendationTest(unittest.TestCase):
         self.assertEqual(result["supplemented_count"], 2)
         self.assertEqual(len(result["plans"]), 3)
         self.assertTrue(result["plans"][0]["is_exact_match"])
+
+    def test_dinner_recommendation_counts_breakfast_and_selected_lunch(self) -> None:
+        breakfast = get_breakfast_preset("soy_egg_bread")
+        lunch = self.items[0]
+        result = recommend_dinner_plans(
+            self.items,
+            self.analysis,
+            lunch_item=lunch,
+            breakfast=breakfast,
+            budget_yuan=100,
+        )
+
+        self.assertEqual(result["meal_mode"], "dinner_only")
+        self.assertTrue(result["plans"])
+        self.assertLessEqual(len(result["plans"]), 10)
+        for plan in result["plans"]:
+            self.assertNotEqual(plan["dinner"]["id"], lunch["id"])
+            expected_energy = (
+                breakfast["nutrition"]["energy_kcal"]
+                + lunch["nutrition"]["energy_kcal"]
+                + plan["dinner_nutrition"]["energy_kcal"]
+            )
+            self.assertEqual(plan["daily_nutrition_totals"]["energy_kcal"], expected_energy)
+
+    def test_api_requires_lunch_after_cutoff(self) -> None:
+        payload = {
+            "height_cm": 170,
+            "weight_kg": 65,
+            "age": 30,
+            "sex": "female",
+            "activity_level": "moderate",
+            "breakfast_id": "none",
+            "budget_yuan": 80,
+        }
+        time_context = {
+            "timezone": "Asia/Shanghai",
+            "display_time": "2026-07-16 15:00:00",
+            "cutoff_time": "14:30",
+            "is_after_lunch_cutoff": True,
+            "recommendation_mode": "dinner_only",
+        }
+
+        with patch("app.main.build_time_context", return_value=time_context):
+            with self.assertRaises(HTTPException) as context:
+                api_recommendations(payload)
+
+        self.assertIn("必须选择已经吃过的午餐", str(context.exception))
+
+    def test_manual_two_meals_mode_overrides_afternoon_default(self) -> None:
+        payload = {
+            "height_cm": 170,
+            "weight_kg": 65,
+            "age": 30,
+            "sex": "female",
+            "activity_level": "moderate",
+            "breakfast_id": "none",
+            "budget_yuan": 80,
+            "recommendation_mode": "two_meals",
+        }
+        time_context = {
+            "timezone": "Asia/Shanghai",
+            "display_time": "2026-07-16 15:00:00",
+            "cutoff_time": "14:30",
+            "is_after_lunch_cutoff": True,
+            "recommendation_mode": "dinner_only",
+        }
+
+        with patch("app.main.build_time_context", return_value=time_context):
+            result = api_recommendations(payload)
+
+        self.assertEqual(result["recommendation"]["meal_mode"], "two_meals")
+        self.assertEqual(result["time"]["selected_recommendation_mode"], "two_meals")
+        self.assertEqual(result["time"]["mode_source"], "manual")
+
+    def test_manual_dinner_mode_overrides_morning_default(self) -> None:
+        payload = {
+            "height_cm": 170,
+            "weight_kg": 65,
+            "age": 30,
+            "sex": "female",
+            "activity_level": "moderate",
+            "breakfast_id": "none",
+            "budget_yuan": 80,
+            "recommendation_mode": "dinner_only",
+            "lunch_item_id": self.items[0]["id"],
+        }
+        time_context = {
+            "timezone": "Asia/Shanghai",
+            "display_time": "2026-07-16 12:00:00",
+            "cutoff_time": "14:30",
+            "is_after_lunch_cutoff": False,
+            "recommendation_mode": "two_meals",
+        }
+
+        with patch("app.main.build_time_context", return_value=time_context):
+            result = api_recommendations(payload)
+
+        self.assertEqual(result["recommendation"]["meal_mode"], "dinner_only")
+        self.assertEqual(result["time"]["selected_recommendation_mode"], "dinner_only")
+        self.assertEqual(result["time"]["mode_source"], "manual")
 
     def test_similar_expensive_item_is_removed_before_pairing(self) -> None:
         # 两道营养几乎相同的菜只保留便宜款，营养差异明显的第三道菜继续保留。
